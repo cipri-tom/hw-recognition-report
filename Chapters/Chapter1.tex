@@ -6,15 +6,6 @@
 
 %----------------------------------------------------------------------------------------
 
-% Define some commands to keep the formatting separated from the content
-\newcommand{\keyword}[1]{\textbf{#1}}
-\newcommand{\tabhead}[1]{\textbf{#1}}
-\newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\file}[1]{\texttt{\bfseries#1}}
-\newcommand{\option}[1]{\texttt{\itshape#1}}
-
-%----------------------------------------------------------------------------------------
-
 Ideas ...
 
 Structure of the project, etc
@@ -49,7 +40,7 @@ The logical grouping of fields into categories, along with their associated ID h
 
 \subsection{Quality}
 
-During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\cref{fig:difficult_examples}).
+During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\cref{fig:difficult_examples}). Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
 
 However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
 % TODO: remove whitespce before this list
@@ -69,13 +60,13 @@ However, the biggest source of innacuracies and inconsistencies is the relativel
 	\item[] This often results in non-standard abbreviations or partial words (\cref{fig:oov_words}).
 \end{enumerate}
 
+\subsection{Related work}
+Is this a good place to talk about the related work / literature review ? Basically, we can propose \emph{some} approaches and their strengths / weaknesses . Then we put it all together in "Decisions".
 
-Therefore, we need a robust way of identifying handwritten text outside of a text context, a problem which is also known as \emph{text in the wild}.
+Should we talk here about why eachof those approaches would not work for our case ?
+
+\subsection{Decisions}
+Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}.
 
 
-This makes standard computer vision approaches very difficult and unscalable
 
-
-\section{Related work}
-
-Well, if we already talked about "Why deep learning", we also talked about limits of other approaches, right ?
