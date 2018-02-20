@@ -1,0 +1,81 @@
+% Chapter 1
+
+\chapter{Introduction} % Main chapter title
+
+\label{Intro}
+
+%----------------------------------------------------------------------------------------
+
+% Define some commands to keep the formatting separated from the content
+\newcommand{\keyword}[1]{\textbf{#1}}
+\newcommand{\tabhead}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{\bfseries#1}}
+\newcommand{\option}[1]{\texttt{\itshape#1}}
+
+%----------------------------------------------------------------------------------------
+
+Ideas ...
+
+Structure of the project, etc
+
+
+\section{Motivation}
+AXA needs to process approximately 200,000 accident statements per year. This is a very slow process, etc etc
+
+List some requirements. These are loosely specified, therefore the project has a broad scope.
+
+\section{Why deep learning?}
+Given the loose requirements above, the scope of the project was set to be an exploratory one, to investigate the capabilities of the state of the art approaches in text recognition, and to adapt them to our needs. We want to extract as much data as possible from the statements, while keeping a general and flexible approach that can be applied to different formats and, later on, to different types of documents.
+
+During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
+
+
+\subsection{Format}
+Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\cref{fig:standard_tools}) on our problem. We believe this is due to:
+
+\begin{enumerate}
+	\item the irregular format -- Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents;
+
+	\item a mix of styles -- OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
+\end{enumerate}
+
+We can note, however, that the statements \emph{do} subscribe to a certain, albeit non-standard, format. Text entry zones are indicated by a line, preceded with the name of the field in the language of the country. These are logically grouped into categories such as Policyholder, Vehicle, Insurance company etc., and each category has a unique identifying number (in the upper left corner). The personal information of the two persons is separated on the left and right sides by a set of checkboxes which describe the accident conditions.
+
+The logical grouping of fields into categories, along with their associated ID have become almost standard across the European Union and even neighbouring countries. However, only the \emph{content structure} seems consistent, whereas the actual placement of fields on the page can be significantly different.
+
+
+
+
+\subsection{Quality}
+
+During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\cref{fig:difficult_examples}).
+
+However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
+% TODO: remove whitespce before this list
+\begin{enumerate}
+	\item choose the format of the input data
+	\item[] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
+
+	% TODO: find a better word for "actors"
+	% TODO: show pictures
+	\item use the available space to their pleasing
+	\item[] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them.
+
+	\item{use their natural handwriting \label{itm:natural_handwriting}}
+	\item[] This introduces a great degree of variation for text entries, as well as ambiguity. As seen in \cref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
+
+	\item use any vocabulary they consider suitable
+	\item[] This often results in non-standard abbreviations or partial words (\cref{fig:oov_words}).
+\end{enumerate}
+
+
+Therefore, we need a robust way of identifying handwritten text outside of a text context, a problem which is also known as \emph{text in the wild}.
+
+
+This makes standard computer vision approaches very difficult and unscalable
+
+
+\section{Related work}
+
+Well, if we already talked about "Why deep learning", we also talked about limits of other approaches, right ?
