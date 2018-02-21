@@ -1,0 +1,51 @@
+Introduction
+	-- Motivation -- why do we do this; how does the current process work; how we envision it to work; steps to get there
+	-- Challenges -- restrictions imposed by data; want to make it general
+	-- Related work
+		-- classical approaches -- bottom-up & top down; line detection (Hough); form processing
+		-- modern approaches -- CNNs, Max's work; other from ICLR, IHWR etc
+
+Detection
+	-- Constraints + high_engineering_classical => need to use modern approach == CNNs + object detection
+	-- Describe Faster R-CNN
+	-- Data procurement
+		-- RIMES
+		-- paragraph level -- side by side (2 or 3 way) -- doesn't generalize (mention gray vs B&W)
+		-- noting sec:FRCNN_sampling => uses negative samples, so the above is too clean
+			=> need have something that resembles the statement
+			=> prepare templates and prefill with lines / words
+		-- prefill with line: [DOESN'T WORK]
+			-- too long, need to be split into tokens of several words
+			++ use the same HW style for a continuous set of tokens => resembles real scenario
+			-- must be careful not to cut a word => use horizontal projection and find white spaces
+			-- doesn't work because there are badly segmented lines (including lines above, below)
+			-- need to align to template => need to know baseline => baseline detection method
+		-- prefill with words:
+			-- too short => need to combine several => different HW style on same line
+			-- but this could be good because we need to be robust to a high level of variation
+			-- same baseline detection -- works well because words are better segmented (no skew or above/below text)
+
+
+Detection
+	-- Object detection, general approach
+	-- Faster R-CNN:
+		-- Architecture
+			-- ... different parts ...
+		-- Results
+			-- Data 1: full RIMES side-by-side => bad
+			-- Data 2: Prefilled templates with RIMES => works, but meh
+			-- Data 3: [NOT YET RUN] Prefilled templates with Word_Generator => should be better
+		-- "Conclusions":
+			-- can work, but often cuts text (show examples of IoU 0.5)
+	-- CTPN (small boxes)
+		-- improves on FRCNN weaknesses
+		-- Architecture
+			-- ...
+		-- Results
+			-- Data 2: decent, but not too tight boxes (noisy labels)
+			-- Data 3: works well
+
+
+Recognition
+
+Results
