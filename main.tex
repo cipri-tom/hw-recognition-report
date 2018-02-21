@@ -38,6 +38,15 @@ chapterinoneline, % Uncomment to place the chapter title next to the number on o
 consistentlayout, % Uncomment to change the layout of the declaration, abstract and acknowledgements pages to match the default layout
 ]{MastersDoctoralThesis} % The class file specifying the document structure
 
+% fix the template https://tex.stackexchange.com/q/383150/
+\makeatletter
+\RenewDocumentCommand{\thesistitle} { O{#2} m }{%
+   \def\shorttitle{#1}%
+   \def\@title{#2}%
+   \def\ttitle{#2}%
+}
+\makeatother
+
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
 
@@ -48,6 +57,7 @@ consistentlayout, % Uncomment to change the layout of the declaration, abstract 
 \addbibresource{example.bib} % The filename of the bibliography
 
 \usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
+
 
 %----------------------------------------------------------------------------------------
 %	MARGIN SETTINGS
@@ -63,13 +73,15 @@ consistentlayout, % Uncomment to change the layout of the declaration, abstract 
 	%showframe, % Uncomment to show how the type block is set on the page
 }
 
+\usepackage{cleveref}
+
 %----------------------------------------------------------------------------------------
 %	THESIS INFORMATION
 %----------------------------------------------------------------------------------------
 
 \thesistitle{Handwriting detection and recognition in difficult business documents} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
 
-\author{Ciprian \textsc{Tomoiagă}} % Your name, this is used in the title page and abstract, print it elsewhere with \authorname
+\author{Ciprian \textsc{Tomoiaga}} % Your name, this is used in the title page and abstract, print it elsewhere with \authorname
 
 \supervisor{Dr. Mathieu \textsc{Salzmann}} % Your supervisor's name, this is used in the title page, print it elsewhere with \supname
 
@@ -93,11 +105,11 @@ consistentlayout, % Uncomment to change the layout of the declaration, abstract 
 
 \faculty{\href{http://ic.epfl.ch/computer-science}{Computer Science}} % Your faculty's name and URL, this is used in the title page and abstract, print it elsewhere with \facname
 
-\AtBeginDocument{
-\hypersetup{pdftitle=\ttitle} % Set the PDF's title to your title
-\hypersetup{pdfauthor=\authorname} % Set the PDF's author to your name
-\hypersetup{pdfkeywords=\keywordnames} % Set the PDF's keywords to your keywords
-}
+% \AtBeginDocument{
+% \hypersetup{pdftitle=\ttitle} % Set the PDF's title to your title
+% \hypersetup{pdfauthor=\authorname} % Set the PDF's author to your name
+% \hypersetup{pdfkeywords=\keywordnames} % Set the PDF's keywords to your keywords
+% }
 
 \begin{document}
 
@@ -240,7 +252,9 @@ consistentlayout, % Uncomment to change the layout of the declaration, abstract 
 % Include the chapters of the thesis as separate files from the Chapters folder
 % Uncomment the lines as you write the chapters
 
-\include{Chapters/Chapter1}
+\include{Chapters/intro}
+\include{Chapters/detection}
+
 %\include{Chapters/Chapter2}
 %\include{Chapters/Chapter3}
 %\include{Chapters/Chapter4}

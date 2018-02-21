@@ -2,7 +2,7 @@
 
 \chapter{Introduction} % Main chapter title
 
-\label{Intro}
+\label{ch:intro}
 
 %----------------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ AXA needs to process approximately 200,000 accident statements per year. This is
 
 List some requirements. These are loosely specified, therefore the project has a broad scope.
 
-\section{Why deep learning?}
+\section{Why deep learning?}\label{sec:challenges}
 Given the loose requirements above, the scope of the project was set to be an exploratory one, to investigate the capabilities of the state of the art approaches in text recognition, and to adapt them to our needs. We want to extract as much data as possible from the statements, while keeping a general and flexible approach that can be applied to different formats and, later on, to different types of documents.
 
 During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
@@ -67,6 +67,8 @@ Should we talk here about why eachof those approaches would not work for our cas
 
 \subsection{Decisions}
 Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}.
+
+
 
 
 
