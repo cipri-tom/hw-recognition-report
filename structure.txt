@@ -1,15 +1,27 @@
 Introduction
-	-- Motivation -- why do we do this; how does the current process work; how we envision it to work; steps to get there
-	-- Challenges -- restrictions imposed by data; want to make it general
+	-- Motivation
+		-- why do we do this
+		-- how does the current process work
+		-- how we envision it to work
+		-- steps to get there
+	-- Challenges
+		-- restrictions imposed by data & process
+		-- want to make it general (not specific to statement documents)
 	-- Related work
-		-- classical approaches -- bottom-up & top down; line detection (Hough); form processing
-		-- modern approaches -- CNNs, Max's work; other from ICLR, IHWR etc
+		-- classical approaches
+			-- detection -- bottom-up & top down; line detection (Hough); form processing
+			-- recognition -- template matching, CRF, HMMs
+		-- modern approaches
+			-- detection -- CNNs, Max's work; other from ICLR, IHWR etc
+			-- recognition -- MDLSTM, CRNN, Attention, embedding words & images in common subspace (needs dict)
 
-Detection
+
+Detection -- v1
 	-- Constraints + high_engineering_classical => need to use modern approach == CNNs + object detection
 	-- Describe Faster R-CNN
 	-- Data procurement
-		-- RIMES
+		-- not enough, need to use transfer learning
+		-- we use RIMES (b/c French)
 		-- paragraph level -- side by side (2 or 3 way) -- doesn't generalize (mention gray vs B&W)
 		-- noting sec:FRCNN_sampling => uses negative samples, so the above is too clean
 			=> need have something that resembles the statement
@@ -44,7 +56,6 @@ Detection
 		-- Results
 			-- Data 2: decent, but not too tight boxes (noisy labels)
 			-- Data 3: works well
-
 
 Recognition
 
