@@ -16,14 +16,14 @@ AXA needs to process approximately 200,000 accident statements per year. This is
 
 List some requirements. These are loosely specified, therefore the project has a broad scope.
 
-\section{Why deep learning?}\label{sec:challenges}
+\section{Challenges}\label{sec:challenges}
 Given the loose requirements above, the scope of the project was set to be an exploratory one, to investigate the capabilities of the state of the art approaches in text recognition, and to adapt them to our needs. We want to extract as much data as possible from the statements, while keeping a general and flexible approach that can be applied to different formats and, later on, to different types of documents.
 
 During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
 
 
 \subsection{Format}
-Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\cref{fig:standard_tools}) on our problem. We believe this is due to:
+Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\autoref{fig:standard_tools}) on our problem. We believe this is due to:
 
 \begin{enumerate}
 	\item the irregular format -- Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents;
@@ -40,7 +40,7 @@ The logical grouping of fields into categories, along with their associated ID h
 
 \subsection{Quality}
 
-During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\cref{fig:difficult_examples}). Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
+During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\autoref{fig:difficult_examples}). Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
 
 However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
 % TODO: remove whitespce before this list
@@ -54,18 +54,19 @@ However, the biggest source of innacuracies and inconsistencies is the relativel
 	\item[] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them.
 
 	\item{use their natural handwriting \label{itm:natural_handwriting}}
-	\item[] This introduces a great degree of variation for text entries, as well as ambiguity. As seen in \cref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
+	\item[] This introduces a great degree of variation for text entries, as well as ambiguity. As seen in \autoref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
 
 	\item use any vocabulary they consider suitable
-	\item[] This often results in non-standard abbreviations or partial words (\cref{fig:oov_words}).
+	\item[] This often results in non-standard abbreviations or partial words (\autoref{fig:oov_words}).
 \end{enumerate}
 
-\subsection{Related work}
+\section{Related work}
 Is this a good place to talk about the related work / literature review ? Basically, we can propose \emph{some} approaches and their strengths / weaknesses . Then we put it all together in "Decisions".
 
 Should we talk here about why eachof those approaches would not work for our case ?
 
-\subsection{Decisions}
+\section{Decisions}
+
 Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}.
 
 

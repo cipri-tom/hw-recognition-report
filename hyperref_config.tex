@@ -1,0 +1,63 @@
+\usepackage[backref]{hyperref}
+\hypersetup{
+  pdftitle      = {TODO},
+  pdfauthor     = {Ciprian Tomoiaga},
+  pdfsubject    = {TODO},
+  pdfkeywords   = {TODO},
+  pdfpagemode   = UseOutlines,
+  pdfstartview  = Fit,
+  pdfpagelayout = OneColumn,       % document in 1 column continuous scrolling
+  unicode=true,                    % use Unicode in bookmarks
+  bookmarksnumbered  = true,       % shows numbers in bookmarks like ToC
+  bookmarksopen      = true,
+  bookmarksopenlevel = 1,
+  colorlinks   = true,             % Colours links instead of ugly boxes
+  urlcolor     = {blue!80!black},  % Colour for external hyperlinks
+  linkcolor    = {red!50!black},   % Colour of internal links
+  citecolor    = {blue!50!black},  % Colour of citations
+  breaklinks   = true,             % Break long links into lines
+  linktocpage  = false             % ToC, LoF, LoT place hyperlink on page number, rather than entry text
+}
+
+%% ----------------------------------------------------------------------------
+\newcommand*{\nolink}[1]{%
+  \begin{NoHyper}#1\end{NoHyper}%
+}
+
+%% ----------------------------------------------------------------------------
+\newcommand{\algorithmautorefname}{algorithm}
+% TODO: workaround incompatibility hyperref + appendix package
+% \newcommand{\appref}[1]{\hyperref[#1]{Appendix~\ref{#1}}}
+
+
+%% ----------------------------------------------------------------------------
+% provide \Autoref :
+\usepackage{catoptions}
+\makeatletter
+\def\figureautorefname{figure}
+\def\tableautorefname{table}
+\def\Autoref#1{%
+  \begingroup
+  \edef\reserved@a{\cpttrimspaces{#1}}%
+  \ifcsndefTF{r@#1}{%
+    \xaftercsname{\expandafter\testreftype\@fourthoffive}
+      {r@\reserved@a}.\\{#1}%
+  }{%
+    \ref{#1}%
+  }%
+  \endgroup
+}
+\def\testreftype#1.#2\\#3{%
+  \ifcsndefTF{#1autorefname}{%
+    \def\reserved@a##1##2\@nil{%
+      \uppercase{\def\ref@name{##1}}%
+      \csn@edef{#1autorefname}{\ref@name##2}%
+      \autoref{#3}%
+    }%
+    \reserved@a#1\@nil
+  }{%
+    \autoref{#3}%
+  }%
+}
+\makeatother
+

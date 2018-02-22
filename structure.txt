@@ -16,12 +16,17 @@ Introduction
 			-- recognition -- MDLSTM, CRNN, Attention, embedding words & images in common subspace (needs dict)
 
 
+
+================================================================================================
+
+
+
 Detection -- v1
 	-- Constraints + high_engineering_classical => need to use modern approach == CNNs + object detection
 	-- Describe Faster R-CNN
-	-- Data procurement
-		-- not enough, need to use transfer learning
-		-- we use RIMES (b/c French)
+		-- ... different parts ...
+	-- FRCNN Experiments
+		 § Generally, there's no data available -> We use external data and try to adapt it to improve quality of transfer. We use as database RIMES, b/c French and clean, but with problems which we will explore
 		-- paragraph level -- side by side (2 or 3 way) -- doesn't generalize (mention gray vs B&W)
 		-- noting sec:FRCNN_sampling => uses negative samples, so the above is too clean
 			=> need have something that resembles the statement
@@ -36,14 +41,23 @@ Detection -- v1
 			-- too short => need to combine several => different HW style on same line
 			-- but this could be good because we need to be robust to a high level of variation
 			-- same baseline detection -- works well because words are better segmented (no skew or above/below text)
+		-- TODO: prefill with Generator
+	-- CTPN
+		§ FRCNN can detect text, but with a generally poor accuracy -- no well centred
+		§ could be solved, probably, with further bbox regression (as Jaderberg)
+		§ but there's a better suited architecture --
+		-- ... different parts ... and improvements (not all heights, no rotations)
+	-- Results
+		-- CTPN is better :)
 
 
-Detection
+Detection -- v2
 	-- Object detection, general approach
 	-- Faster R-CNN:
 		-- Architecture
 			-- ... different parts ...
 		-- Results
+			 § Generally, there's no data available -> We use external data and try to adapt it to improve quality of transfer. We use as database RIMES, b/c French and clean, but with problems which we will explore
 			-- Data 1: full RIMES side-by-side => bad
 			-- Data 2: Prefilled templates with RIMES => works, but meh
 			-- Data 3: [NOT YET RUN] Prefilled templates with Word_Generator => should be better
@@ -57,6 +71,17 @@ Detection
 			-- Data 2: decent, but not too tight boxes (noisy labels)
 			-- Data 3: works well
 
+
+================================================================================================
+
 Recognition
+
+
+
+
+
+================================================================================================
+
+
 
 Results
