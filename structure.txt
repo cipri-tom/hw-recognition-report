@@ -26,6 +26,7 @@ Detection -- v1
 	-- Describe Faster R-CNN
 		-- possible good description of CNNs: https://arxiv.org/pdf/1604.00187.pdf
 		-- ... different parts ...
+		-- say it highly depend on the quality of the object candidates and suffer from the fact that a part of a text line can look like a full text line. Exemplify this with training on RIMES lines + detection on RIMES lines (should work ok-ish, because we only lose a small amount at the ends); but doesn't work that well when the object is smaller and there's more noise (show examples)
 	-- FRCNN Experiments
 		 § Generally, there's no data available -> We use external data and try to adapt it to improve quality of transfer. We use as database RIMES, b/c French and clean, but with problems which we will explore
 		-- paragraph level -- side by side (2 or 3 way) -- doesn't generalize (mention gray vs B&W)
@@ -96,3 +97,6 @@ OOV
 CNN
 RNN
 LSTM
+RPN
+ROI
+NMS

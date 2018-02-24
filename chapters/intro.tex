@@ -96,9 +96,17 @@ During phase zero of the project, we carried out extensive data screening in ord
 		In the context of document analysis and form processing, classic approaches generally use a bottom-up strategy \citep{bottom_up}. After a binarisation step, foregroung pixels are grouped into connected components. A filtering step based on blob's size is then applied in order to remove noise. Printed characters are separated from handwritten ones via profile projection matching \citep{profile_matching,moysset2014a2ia} or template matching \citep{template_matching}. Characters are grouped into words and text lines based on spatial proximity together with a Markov Random Field that models the dependency of neighbouring segmentes \citep{detection_mrf,detection_mrf2}. Alternatively, \citet{top_down} propose a top-down segmentation algorithm, but this is more suited for documents which present a well-formed Manhattan structure.
 
 
-		researchers started using different variations of such architectures to detect text as well as other classes of objects.
+		Since \citet{ciresan} proved the high effectiveness of CNNs not only for text recognition, but also for a wide range of image classification tasks, they have been used to achieve high performance also in object detection. Two different meta-architectures dominate the field.
 
-	%
+		The first one relies on object candidates. The first work \citep{fast_rcnn} extracts them with classic region proposal algorithms and classifies them using a CNN in a predefined number of classes. The method is relatively time-consuming, owing to the large number of proposals that is needed for a high recall. \Citet{faster_rcnn} introduce a region proposal network (RPN) which achieves a good recall rate with far fewer proposals. This consists of a fully CNN that shares weights with the classifier, thus allowing it to be trained end-to-end while also providing unprecedented detection speed. Hence, it was called \emph{Faster R-CNN}. Slight modifications to this architecture are presented by \citet{deeptext} who adapt it for text detection by further reducing the number of proposals and applying multi-level ROI-pooling, along with a heuristic for Non-Maximum Suppresion of overlapping boxes. \Citet{jaderberg} also present an architecture based on word-level region proposals. These are filtered with random forests and regressed with a CNN to be centred on the word.
+
+		The second meta-architecture ...
+
+
+
+
+
+
 
 	\subsection{End-to-end}
 	Attention OCR, Learning where to start and when to stop
