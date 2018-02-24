@@ -1,3 +1,4 @@
+%!TEX root = main.tex
 % Chapter 1
 
 \chapter{Introduction} % Main chapter title
@@ -6,7 +7,9 @@
 
 %----------------------------------------------------------------------------------------
 
-Ideas ...
+Say we are only concerned with *offline* recognition. use this to explain : % http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=367882 and this R. Plamondon and S. N. Srihari.  On-line and off-line handwriting recognition: a comprehensive survey. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2000
+
+
 
 Structure of the project, etc
 
@@ -21,53 +24,94 @@ Given the loose requirements above, the scope of the project was set to be an ex
 
 During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
 
+%----------------------------------------------------------------------------------------
 
 \subsection{Format}
-Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\autoref{fig:standard_tools}) on our problem. We believe this is due to:
+	Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\autoref{fig:standard_tools}) on our problem. We believe this is due to:
 
-\begin{enumerate}
-	\item the irregular format -- Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents;
+	\begin{enumerate}
+		\item the irregular format -- Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents;
 
-	\item a mix of styles -- OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
-\end{enumerate}
+		\item a mix of styles -- OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
+	\end{enumerate}
 
-We can note, however, that the statements \emph{do} subscribe to a certain, albeit non-standard, format. Text entry zones are indicated by a line, preceded with the name of the field in the language of the country. These are logically grouped into categories such as Policyholder, Vehicle, Insurance company etc., and each category has a unique identifying number (in the upper left corner). The personal information of the two persons is separated on the left and right sides by a set of checkboxes which describe the accident conditions.
+	We can note, however, that the statements \emph{do} subscribe to a certain, albeit non-standard, format. Text entry zones are indicated by a line, preceded with the name of the field in the language of the country. These are logically grouped into categories such as Policyholder, Vehicle, Insurance company etc., and each category has a unique identifying number (in the upper left corner). The personal information of the two persons is separated on the left and right sides by a set of checkboxes which describe the accident conditions.
 
-The logical grouping of fields into categories, along with their associated ID have become almost standard across the European Union and even neighbouring countries. However, only the \emph{content structure} seems consistent, whereas the actual placement of fields on the page can be significantly different.
+	The logical grouping of fields into categories, along with their associated ID have become almost standard across the European Union and even neighbouring countries. However, only the \emph{content structure} seems consistent, whereas the actual placement of fields on the page can be significantly different.
 
 
+%----------------------------------------------------------------------------------------
 
 
 \subsection{Quality}
 
-During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\autoref{fig:difficult_examples}). Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
+	During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\autoref{fig:difficult_examples}). Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
 
-However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
-% TODO: remove whitespce before this list
-\begin{enumerate}
-	\item choose the format of the input data
-	\item[] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
+	However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
+	% TODO: remove whitespce before this list
+	\begin{enumerate}
+		\item choose the format of the input data
+		\item[] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
 
-	% TODO: find a better word for "actors"
-	% TODO: show pictures
-	\item use the available space to their pleasing
-	\item[] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them.
+		% TODO: find a better word for "actors"
+		% TODO: show pictures
+		\item use the available space to their pleasing
+		\item[] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them.
 
-	\item{use their natural handwriting \label{itm:natural_handwriting}}
-	\item[] This introduces a great degree of variation for text entries, as well as ambiguity. As seen in \autoref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
+		\item{use their natural handwriting \label{itm:natural_handwriting}}
+		\item[] This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
 
-	\item use any vocabulary they consider suitable
-	\item[] This often results in non-standard abbreviations or partial words (\autoref{fig:oov_words}).
-\end{enumerate}
+		\item use any vocabulary they consider suitable
+		\item[] This often results in non-standard abbreviations or partial words (\autoref{fig:oov_words}).
+	\end{enumerate}
+
+
+%========================================================================================
+
 
 \section{Related work}
-Is this a good place to talk about the related work / literature review ? Basically, we can propose \emph{some} approaches and their strengths / weaknesses . Then we put it all together in "Decisions".
+	Handwriting recognition is among the oldest and most common problems of machine learning. In fact, these days the recognition of handwritten digits has become the \textit{Hello world} equivalent of machine learning. For small examples like the MNIST challenge it works very well, to the degree that it can be considered a solved problem. However, the general scope of text detection and recognition, especially of handwritten type, is still an open research problem. In the past years many approaches have focused on the sister challenge, \emph{Optical Character Recognition} (OCR), because it can deliver more value to businesses while being easier to solve due to less variation in style.
 
-Should we talk here about why eachof those approaches would not work for our case ?
+	In what follows, we will list related work in this vast field, trying to summarise a few different approaches. A complete literature review is beyond the scope of this project. For each subproblem, detection or transcription, we will try to distinguish between \emph{classical} techniques which employ hand-crafted features, and the \emph{modern} ones, which make use of neural networks for finding the best features of text.
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Transcription}
+		Early works for text recognition focused on simply classifying individual characters. \Citet{leCun_MNIST} presented a robust system for handwritten digit classification using Convolutional Neural Networks (CNNs). Their effectiveness has been proven over and over again, especially with the work of \citet{ciresan} who were the first to achieve near human performance on this task, while also improving the state of the art of the time on many image classification tasks.
+
+		In order to deal with cursive writing, where character segmentation is more difficult, other works expanded the digit classification approach to words. For example, \citet{sharma2015adapting} adapt a pre-trained CNN to distinguish among classes of word images. This method requires fixed size input image and cannot deal with out-of-vocabulary words. \Citet{jaderberg2014_unconstrained} use an ensemble of character and n-gram CNNs to perform unconstrained recognition, but it only supports \emph{printed} words of length up to 23. \Citet{sudholt2016phocnet} provide a similar architecture which improves on these weaknesses by using Pyramidal Histogram of Characters (PHOC) as labels for the task of \emph{word spotting}.
+
+		Another paradigm for dealing with cursive text is to use Recurrent Neural Networks (RNNs). This has gained momentum after the work of \citet{graves_LSTM} and \citet{graves_MDLSTM}, which excel at offline handwritting recognition. The former uses a heavy pre-processing pipeline for normalising the text image and extracts a collection of hand-crafted features for each column. These are then fed into a single-dimensional, bi-directional Long Short-Term Memory (LSTM) network \citep{LSTM_original}. The later provides a more general and robust system that works with raw pixel values and multiple languages at the same time by employing a multi-dimensional LSTM network. \Citet{MDLSTM_dropout} improves on the MD-LSTM architecture by carefully using dropout to the feed-forward connections.
+
+		However, as \citet{MDLSTM_vs_CNN} notes, the MD-LSTM architecture has a significant computational cost and extracts features similar to the convolutional ones. Therefore, they propose a mix algorithm which reduces the input image into a series of convolutional features and predicts text using a 1-D LSTM network. \Citet{CRNN} use almost the same archtecture for transcribing text in natural images.
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Detection}
+
+		All the systems mentioned above focus solely on transcribing an already-segmented piece of text which comes from a clean database. In the real world, however, it is necessary to first locate the text and only then we can transcribe it.
+
+	% TODO: use the cireșan below, in detection
+
+		In the context of document analysis and form processing, classic approaches generally use a bottom-up strategy \citep{bottom_up}. After a binarisation step, foregroung pixels are grouped into connected components. A filtering step based on blob's size is then applied in order to remove noise. Printed characters are separated from handwritten ones via profile projection matching \citep{profile_matching,moysset2014a2ia} or template matching \citep{template_matching}. Characters are grouped into words and text lines based on spatial proximity together with a Markov Random Field that models the dependency of neighbouring segmentes \citep{detection_mrf,detection_mrf2}. Alternatively, \citet{top_down} propose a top-down segmentation algorithm, but this is more suited for documents which present a well-formed Manhattan structure.
+
+
+		researchers started using different variations of such architectures to detect text as well as other classes of objects.
+
+	%
+
+	\subsection{End-to-end}
+	Attention OCR, Learning where to start and when to stop
+
+
+
+
+%========================================================================================
+
 
 \section{Decisions}
 
-Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}.
+	Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}.
 
 
 

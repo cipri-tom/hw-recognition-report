@@ -24,6 +24,7 @@ Introduction
 Detection -- v1
 	-- Constraints + high_engineering_classical => need to use modern approach == CNNs + object detection
 	-- Describe Faster R-CNN
+		-- possible good description of CNNs: https://arxiv.org/pdf/1604.00187.pdf
 		-- ... different parts ...
 	-- FRCNN Experiments
 		 § Generally, there's no data available -> We use external data and try to adapt it to improve quality of transfer. We use as database RIMES, b/c French and clean, but with problems which we will explore
@@ -85,3 +86,13 @@ Recognition
 
 
 Results
+
+================================================================================================
+
+
+ABBREVIATIONS
+
+OOV
+CNN
+RNN
+LSTM
