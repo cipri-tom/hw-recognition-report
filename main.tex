@@ -6,7 +6,7 @@
 \usepackage[T1]{fontenc}    % use 8 bit output font encoding with more glyphs
 \usepackage[utf8]{inputenc} % so you can type ă
 
-\usepackage{xcolor}         % more color choices
+\usepackage[dvipsnames]{xcolor}         % more color choices
 \usepackage[english=british]{csquotes} % for correct use of `` '' ... TODO!!
 \usepackage{url}            % typeset URL's sensibly
 \usepackage{enumitem} % configure labels of items in enumerations i.e. i), ii)
@@ -31,6 +31,11 @@
 \usepackage{natbib}
 \setcitestyle{authoryear,round}
 
+\definecolor{ToDoColor}{rgb}{0.4,0.4,0.4}
+\newcommand{\todo}[1]{\textcolor{ToDoColor}{ToDo: #1}}
+\newcommand{\startToDo}{\color{ToDoColor}}
+\newcommand{\stopToDo}{\color{Black}}
+
 %% =============================================================================
 % Remove "Chapter x" line before a new chapter
 % This should be in .cls file, ideally
@@ -47,6 +52,9 @@
 \usepackage{amsmath, amssymb}
 \DeclareMathOperator*{\argmin}{argmin}
 \providecommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\ve}[1]{\mathbf{#1}} % for displaying a vector
+\newcommand{\ma}[1]{\mathrm{#1}} % for displaying a matrix
+
 
 \usepackage{graphicx}
 \graphicspath{{./images/}}
@@ -73,6 +81,12 @@
 
 % typeset the name of a package: \pkg{tum_ardrone}
 \newcommand{\pkg}[1]{\textsf{\detokenize{#1}}}
+\makeatletter
+    \@ifdefinable{\FRCNN}{\def\FRCNN#{\mbox{\pkg{Faster R-CNN}}}}
+    \@ifdefinable{\CTPN}{\def\CTPN#{\mbox{\pkg{CTPN}}}}
+    \@ifdefinable{\RESNET}{\def\RESNET#{\mbox{\pkg{ResNet-101}}}}
+    \@ifdefinable{\CRNN}{\def\CRNN#{\mbox{\pkg{CRNN}}}}
+\makeatother
 
 
 \title{Handwriting recognition in business documents}

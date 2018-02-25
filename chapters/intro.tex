@@ -29,11 +29,13 @@ During phase zero of the project, we carried out extensive data screening in ord
 \subsection{Format}
 	Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\autoref{fig:standard_tools}) on our problem. We believe this is due to:
 
-	\begin{enumerate}
-		\item the irregular format -- Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents;
+	\begin{description}[style=nextline,font=\normalfont\textbullet\space,labelindent=\parindent]
+		% \item the irregular format
+		\item[the irregular format] Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents.
 
-		\item a mix of styles -- OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
-	\end{enumerate}
+		% \item a mix of styles
+		\item[a mix of styles] OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
+	\end{description}
 
 	We can note, however, that the statements \emph{do} subscribe to a certain, albeit non-standard, format. Text entry zones are indicated by a line, preceded with the name of the field in the language of the country. These are logically grouped into categories such as Policyholder, Vehicle, Insurance company etc., and each category has a unique identifying number (in the upper left corner). The personal information of the two persons is separated on the left and right sides by a set of checkboxes which describe the accident conditions.
 
@@ -69,7 +71,7 @@ During phase zero of the project, we carried out extensive data screening in ord
 %========================================================================================
 
 
-\section{Related work}
+\section{Related work}\label{sec:related_work}
 	Handwriting recognition is among the oldest and most common problems of machine learning. In fact, these days the recognition of handwritten digits has become the \textit{Hello world} equivalent of machine learning. For small examples like the MNIST challenge it works very well, to the degree that it can be considered a solved problem. However, the general scope of text detection and recognition, especially of handwritten type, is still an open research problem. In the past years many approaches have focused on the sister challenge, \emph{Optical Character Recognition} (OCR), because it can deliver more value to businesses while being easier to solve due to less variation in style.
 
 	In what follows, we will list related work in this vast field, trying to summarise a few different approaches. A complete literature review is beyond the scope of this project. For each subproblem, detection or transcription, we will try to distinguish between \emph{classical} techniques which employ hand-crafted features, and the \emph{modern} ones, which make use of neural networks for finding the best features of text.
@@ -87,7 +89,7 @@ During phase zero of the project, we carried out extensive data screening in ord
 
 	%----------------------------------------------------------------------------------------
 
-	\subsection{Detection}
+	\subsection{Detection}\label{sec:related_detection}
 
 		All the systems mentioned above focus solely on transcribing an already-segmented piece of text which comes from a clean database. In the real world, however, it is necessary to first locate the text and only then we can transcribe it.
 
@@ -98,7 +100,7 @@ During phase zero of the project, we carried out extensive data screening in ord
 
 		Since \citet{ciresan} proved the high effectiveness of CNNs not only for text recognition, but also for a wide range of image classification tasks, they have been used to achieve high performance also in object detection. Two different meta-architectures dominate the field: ROI-based and direct methods.
 
-		The first one relies on object candidates. The first work \citep{fast_rcnn} extracts them with classic region proposal algorithms and classifies them using a CNN in a predefined number of classes. The method is relatively time-consuming, owing to the large number of proposals that is needed for a high recall. \Citet{faster_rcnn} introduce a region proposal network (RPN) which achieves a good recall rate with far fewer proposals. This consists of a fully CNN that shares weights with the classifier, thus allowing it to be trained end-to-end while also providing unprecedented detection speed. Hence, it was called \emph{Faster R-CNN}. Slight modifications to this architecture are presented by \citet{deeptext} who adapt it for text detection by further reducing the number of proposals and applying multi-level ROI-pooling, along with a heuristic for Non-Maximum Suppresion of overlapping boxes. \Citet{jaderberg} also present an architecture based on word-level region proposals. These are filtered with random forests and regressed with a CNN to be centred on the word. Finally, \citet{ctpn} note that text differs significantly from general objects since it can be arbitrarily long. Therefore, previous approaches which rely on a set of anchors with fixed aspect ratios do not scale well to this problem. Their solution extends the \emph{Faster R-CNN} architecture by making the RPN output fine-scale proposals which are grouped into a bounding box by an LSTM network.
+		The first one relies on object candidates. The first work \citep{fast_rcnn} extracts them with classic region proposal algorithms and classifies them using a CNN in a predefined number of classes. The method is relatively time-consuming, owing to the large number of proposals that is needed for a high recall. \Citet{faster_rcnn} introduce a region proposal network (RPN) which achieves a good recall rate with far fewer proposals. This consists of a fully CNN that shares weights with the classifier, thus allowing it to be trained end-to-end. The shared computation also provides detection speed which is up to an order of magnitude faster than the previous implementation, hence the name \FRCNN{}. Slight modifications to this architecture are presented by \citet{deeptext} who adapt it for text detection by further reducing the number of proposals and applying multi-level ROI-pooling, along with a heuristic for Non-Maximum Suppresion of overlapping boxes. \Citet{jaderberg} also present an architecture based on word-level region proposals. These are filtered with random forests and regressed with a CNN to be centred on the word. Finally, \citet{ctpn} note that text differs significantly from general objects since it can be arbitrarily long. Therefore, previous approaches which rely on a set of anchors with fixed aspect ratios do not scale well to this problem. Their solution extends the \FRCNN{} architecture by making the RPN output fine-scale proposals which are grouped into a bounding box by an LSTM network (see \autoref{sec:ctpn} for details).
 
 		The second meta-architecture poses detection as a regression problem and passes the input image only once through a CNN. For example, \citet{ssd} predict class probability and offsets from a default bounding box at each location in the feature map, on multiple levels. Since they still use a set of anchors with a limited choice of aspect ratios, it fails to recognise long texts. \Citet{textboxes} fix this problem by using default boxes with large aspect ratios plus irregular $1 \times 5$ convolutional layers.
 
