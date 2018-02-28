@@ -67,14 +67,63 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 
 \section{Training data}\label{sec:detection_data}
+	Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality. The rest of the section shows how we transition from the clean and neat RIMES database \citep{rimes} to a format that helps the algorithm generalise to our use case.
 
+	%----------------------------------------------------------------------------------------
+
+	\subsection{The RIMES database}\label{sec:rimes}
+		The RIMES database is the result of a huge data collection effort by the French ministries of defense and research which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)).
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Collage of paragraphs}
+		For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders, similarly to the sections in a document (\autoref{fig:collage}). In our comparisons, we will refer to this dataset as \ds{Collage}.
+
+		\todo{We noted that this model performs well on validation, but the transfer does not generalise. The cause is the sampling of negative anchors, which are almost inevitably white. In addition, the line lengths do not vary too much.}
+
+		\begin{figure}
+			\centering
+			\begin{subfigure}[c]{\textwidth}
+				\includegraphics[width=\textwidth]{collage_3}
+				\caption{}
+				\label{sfig:collage_clean}
+			\end{subfigure}
+
+			\begin{subfigure}[c]{\textwidth}
+				\includegraphics[width=\textwidth]{collage_3_detected}
+				\caption{}
+				\label{sfig:collage_detect}
+			\end{subfigure}
+			\caption{Example of generated collage document with 3 juxtaposed paragraphs \subref{sfig:collage_clean} and the detection performed on such a document \subref{sfig:collage_detect}, with ground-truth in black and detection result in green.}
+			\label{fig:collage}
+		\end{figure}
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Filled templates}
+
+	%----------------------------------------------------------------------------------------
+
+		\subsubsection{Baseline detection}
+
+		%----------------------------------------------------------------------------------------
+
+		\subsubsection{Filling with lines}
+
+		%----------------------------------------------------------------------------------------
+
+		\subsubsection{Filling with words}
+
+		%----------------------------------------------------------------------------------------
+
+
+	\subsection{The RIMES database}
 
 
 %========================================================================================
 
 
 \section{Connectionist Text Proposal Network}\label{sec:ctpn}
-
 
 %----------------------------------------------------------------------------------------
 
@@ -83,6 +132,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 
 \section{Results}\label{sec:detection_results}
+	\todo{
+		Compare all \FRCNN{} with \CTPN{}
+	}
 
 
 %----------------------------------------------------------------------------------------

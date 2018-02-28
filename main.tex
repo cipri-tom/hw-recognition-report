@@ -1,10 +1,12 @@
 \documentclass[12pt]{report}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{pdfsync}        % allows clicking in PDF to take you back to the text
 
 \usepackage{lmodern}        % use modern latin fonts
 \usepackage[T1]{fontenc}    % use 8 bit output font encoding with more glyphs
 \usepackage[utf8]{inputenc} % so you can type ă
+% \usepackage{siunitx}        % automatically formats numbers with spaces and all that
 
 \usepackage[dvipsnames]{xcolor}         % more color choices
 \usepackage[english=british]{csquotes} % for correct use of `` '' ... TODO!!
@@ -81,8 +83,8 @@
 % \algtext*{EndIndent}
 
 
-% typeset the name of a package: \pkg{tum_ardrone}
-\newcommand{\pkg}[1]{\textsf{\detokenize{#1}}}
+\newcommand{\pkg}[1]{\textsf{\detokenize{#1}}} % typeset the name of a package: \pkg{tum_ardrone}
+\newcommand{\ds}[1]{\textsl{\textsf{\detokenize{#1}}}} % and of a dataset \ds{RIMES}
 \makeatletter
     \@ifdefinable{\FRCNN}{\def\FRCNN#{\mbox{\pkg{Faster R-CNN}}}}
     \@ifdefinable{\CTPN}{\def\CTPN#{\mbox{\pkg{CTPN}}}}
