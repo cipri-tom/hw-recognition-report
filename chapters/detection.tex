@@ -101,30 +101,49 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Filled templates}
-
+		\todo{Because of limitations of the \ds{Collage} dataset ... We need good negatives}
 	%----------------------------------------------------------------------------------------
 
 		\subsubsection{Baseline detection}
+			\todo{why it is needed. Doesn't work if rotated. List a couple of tried methods (filtering, min-after-max). Show results? (on words and on lines) }
 
 		%----------------------------------------------------------------------------------------
 
 		\subsubsection{Filling with lines}
+		\startToDo
+			List advantages: lines sampled in order of paragraph => consistent writing style (and alignment). But they are too long, so we need to cut. We must not cut in middle of word. Show cutting techniques (projection + median space). Show examplese where it doesn't work. Unreliable transcription => Doesn't work :( (well, it would work for detection, but at the time we imagined we also need transcription on the same data)
 
+			Is it OK to list this work if we didn't use it in the end ?
+		\stopToDo
 		%----------------------------------------------------------------------------------------
 
 		\subsubsection{Filling with words}
+		\startToDo
+			We use the same baseline alignment technique
+
+			Adv: consistent transcription (irrelevant for detection).
+
+			Disadv: multilple writing styles on same line. Could actually be beneficial
+		\stopToDo
 
 		%----------------------------------------------------------------------------------------
 
+		\subsubsection{Filling with generator}
+		\startToDo
+			Should we actually mention this, given that we only introduce the generator later, for transcription ?
 
-	\subsection{The RIMES database}
+			Also, no tests for \FRCNN{} + Generator data, only \CTPN{}. So, should I include it here or later in CTPN section ?
+		\stopToDo
+
+		%----------------------------------------------------------------------------------------
+
 
 
 %========================================================================================
 
 
 \section{Connectionist Text Proposal Network}\label{sec:ctpn}
-
+	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
 %----------------------------------------------------------------------------------------
 
 
