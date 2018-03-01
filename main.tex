@@ -63,12 +63,17 @@
 \usepackage{graphicx}
 \graphicspath{{./images/}}
 
-\usepackage{caption,subcaption}
+\usepackage{caption,subcaption,regexpatch}
 % \subref -> '(a)' rather than just 'a'
 \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
+\captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 \renewcommand\thesubfigure{(\alph{subfigure})}
 \makeatletter
 \renewcommand\p@subfigure{\thefigure~}
+\makeatother
+
+\makeatletter
+\xpatchcmd*{\@caption}{#3}{#2~--~#3}{}{}
 \makeatother
 
 \input{hyperref_config}

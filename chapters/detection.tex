@@ -13,7 +13,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.85\linewidth]{fasterrcnn_diagram.pdf}
-		\caption{The \FRCNN{} architecture (credit to \cite{detection_benchmark}) \label{fig:faster_rcnn}}
+		\caption[The \FRCNN{} architecture]{(credit to \cite{detection_benchmark}) \label{fig:faster_rcnn}}
 	\end{figure}
 
 	The task of object detection builds upon that of image classification. Architectures based on region proposals (see \autoref{sec:related_detection}) can be seen as a two stage algorithm: the first part extracts possible object bounding boxes as a sub-image of the input, while the second one predicts the class associated with each candidate. It is of no surprise then that object detection greatly benefits from the super-human accuracy of deep neural networks \citep{superhuman_classif}. We chose to pair the \FRCNN{} detection architecture with the \RESNET{} feature extractor \citep{resnet}, since this has been proven as a good trade-off between detection accuracy and speed on the standard challenge of ILSCVR \citep{detection_benchmark}. In what follows we present the main building blocks of this architecture.
@@ -30,7 +30,8 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\begin{figure}
 			\centering
 			\includegraphics[width=0.85\linewidth]{resnet}
-			\caption{ResNet blocks (\citet{resnet})
+			\caption[ResNet blocks]{
+				(\citet{resnet})
 				\todo{Add \(\mathcal{H}(\ve{x})\) on the schema and small explanation.}
 				\label{fig:resnet}
 			}
@@ -77,7 +78,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Collage of paragraphs}
-		For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders, similarly to the sections in a document (\autoref{fig:collage}). In our comparisons, we will refer to this dataset as \ds{Collage}.
+		For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders, similarly to the sections in a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation.
+
+		In our comparisons, we will refer to this dataset as \ds{Collage}.
 
 		\todo{We noted that this model performs well on validation, but the transfer does not generalise. The cause is the sampling of negative anchors, which are almost inevitably white. In addition, the line lengths do not vary too much.}
 
@@ -88,43 +91,93 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 				\caption{}
 				\label{sfig:collage_clean}
 			\end{subfigure}
+			\vspace{1em}
 
 			\begin{subfigure}[c]{\textwidth}
 				\includegraphics[width=\textwidth]{collage_3_detected}
 				\caption{}
 				\label{sfig:collage_detect}
 			\end{subfigure}
-			\caption{Example of generated collage document with 3 juxtaposed paragraphs \subref{sfig:collage_clean} and the detection performed on such a document \subref{sfig:collage_detect}, with ground-truth in black and detection result in green.}
+			\caption[\ds{Collage} dataset]{
+				The \ds{Collage} dataset.
+				\subref{sfig:collage_clean}: Example of generated collage document with 3 juxtaposed paragraphs.
+				\subref{sfig:collage_detect}: The detection performed on such a document, with ground-truth in black and detection result in green.
+			}
 			\label{fig:collage}
 		\end{figure}
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Filled templates}
-		\todo{Because of limitations of the \ds{Collage} dataset ... We need good negatives}
+		To address the limitations of the \ds{Collage} dataset, we propose to generate documents which resemble more the real ones. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This gets as close as possible to real data without having to go through an expensive manual labelling process.
+
+		A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted to the right of the placeholder's edge with a random amount. We investigate two possible text sources for filling the placeholder.
+
+		The first one consists of images of individual words from the RIMES database. These are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, handwriting styles from multiple authors would be combined on the same line and in the same document section.
+
+		The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines usually do not fit inside the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
+		\noindent\begin{minipage}{\linewidth}
+		\begin{enumerate}
+			\item use the line transcription labels to find the number of words \(n\)
+			\item project the image columns horizontally, accumulating their sum into \[
+				\ve{p}[c] = \sum_r \ma{I}[r,c]
+			\]
+			\item find the continuous runs of zero \(\ve{z} = \{ (i, j) \mid \ve{p}[k] = 0, \forall k \in [i, j] \}\); these correspond to gaps between letters (marked in red in \autoref{fig:baseline_ok})
+			\item take \(n\) widest gaps \(\ve{z}'\) from \(\ve{z}\), with the gap width \(w := j - i\)
+			\item split at columns \(c_k = \frac{j_k - i_k}{2}, \forall (i_k, j_k) \in \ve{z}'\).
+		\end{enumerate}
+		\end{minipage}
+		\\
+
+		To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 75\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines follow each other from the same letter, so there is writer consistency for a good part of a template, just like in the real world.
+
+		\begin{figure}
+			\centering
+			\includegraphics[width=\linewidth]{template_empty}
+			\caption[Document template]{An empty document template. Note that the placeholders are slightly bigger than the location for text entry in order to allow text that goes out of bounds. Also, there are placeholders in places that do not correspond to any field, which matches how people use these documents.}
+			\label{fig:template}
+		\end{figure}
+
 	%----------------------------------------------------------------------------------------
 
 		\subsubsection{Baseline detection}
+			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple algorithm to find the baseline row \(r_b\) of a text image \(\ma{I}\) (\autoref{fig:baseline}) :
+			\noindent\begin{minipage}{\linewidth}
+			\begin{enumerate}
+				\item project the rows of the image by averaging the pixel values: \[
+					\ve{p}[r] = \frac{1}{W} \sum_c I[r,c]
+				\]
+				\item let \(m = \mathrm{median}(\ve{p})\)
+				\item the baseline is the first row \(r_b\) in reverse order where \(\ve{p}[r_b] > m\).
+			\end{enumerate}
+			\end{minipage}\\
+
+			This algorithm works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
+
+			\begin{figure}[h!]
+				\centering
+				\begin{subfigure}{\linewidth}
+					\includegraphics[width=\linewidth]{baseline_ok}
+					\caption{Good and clean horizontal image}
+					\label{fig:baseline_ok}
+				\end{subfigure}
+
+				\begin{subfigure}{\linewidth}
+					\includegraphics[width=\linewidth]{baseline_skewed}
+					\caption{Skewed image}
+					\label{fig:baseline_skewed}
+				\end{subfigure}
+
+				\begin{subfigure}{\linewidth}
+					\includegraphics[width=\linewidth]{baseline_segmentation}
+					\caption{Badly segmented image, with slanted text}
+					\label{fig:baseline_segmentation}
+				\end{subfigure}
+				\caption[Baseline and tokens]{Detection of the baseline and the tokens in a text image.}
+				\label{fig:baseline}
+			\end{figure}
+
 			\todo{why it is needed. Doesn't work if rotated. List a couple of tried methods (filtering, min-after-max). Show results? (on words and on lines) }
-
-		%----------------------------------------------------------------------------------------
-
-		\subsubsection{Filling with lines}
-		\startToDo
-			List advantages: lines sampled in order of paragraph => consistent writing style (and alignment). But they are too long, so we need to cut. We must not cut in middle of word. Show cutting techniques (projection + median space). Show examplese where it doesn't work. Unreliable transcription => Doesn't work :( (well, it would work for detection, but at the time we imagined we also need transcription on the same data)
-
-			Is it OK to list this work if we didn't use it in the end ?
-		\stopToDo
-		%----------------------------------------------------------------------------------------
-
-		\subsubsection{Filling with words}
-		\startToDo
-			We use the same baseline alignment technique
-
-			Adv: consistent transcription (irrelevant for detection).
-
-			Disadv: multilple writing styles on same line. Could actually be beneficial
-		\stopToDo
 
 		%----------------------------------------------------------------------------------------
 
