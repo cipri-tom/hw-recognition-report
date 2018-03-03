@@ -1,3 +1,5 @@
+%!TEX root = ../main.tex
+
 \chapter{Text detection}
 \label{ch:detection}
 
@@ -24,6 +26,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		In order to perform detection on an input image, we first need to extract representative high-level features from the raw pixel values. To this end, we employ the \RESNET{} convolutional architecture which has won many competitions in classification, detection and segmentation.
 
 		The novelty of this approach\footnote{\todo{Should I dedicate a subsection to describe how (Conv) Neural Nets work?}} relies in forcing the network to learn a \emph{residual} mapping \(\mathcal{F}(\ve{x}) := \mathcal{H}(\ve{x}) - \ve{x}\), where \(\mathcal{H}(\ve{x})\) represents a desired mapping from input \(\ve{x}\), which is to be fit through a few stacked layers. This comes from the observation that the optimal function to be learnt could be closer to the identity mapping than to a zero mapping. Therefore, the new formulation eases the job of the optimiser since it only has to find perturbations around the identity mapping, rather than learn a completely new function.
+		% http://www.robots.ox.ac.uk/~vgg/publications/2015/Jaderberg15b/jaderberg15b.pdf gives a good started about many things, including how ConvNets work
 
 		Moreover, in order to keep the number of parameters as small as possible and have reasonable training times for very deep architectures (101 layers), standard convolutions are replaced by bottleneck-blocks of convolutions (\autoref{fig:resnet} right). Such blocks are formed by concatenating a \(1 \times 1\) convolutional layer at each end of the \(3 \times 3\) layer. The ``prefix'' layer reduces the number of filters while the ``suffix'' one increases it back, thus reducing the computational cost of the heavier middle layer.
 
@@ -48,32 +51,50 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 		For training the RPN, the following loss function has to be minimised:
 		\begin{equation}\label{eq:rpn_loss}
-		L(\{p_i\}, \{t_i\}) = \frac{1}{N_{\cls}}\sum_i L_{\cls}(p_i, p^{*}_i) + \lambda\frac{1}{N_{\reg}}\sum_i  p^{*}_i L_{\reg}(t_i, t^{*}_i).
+		L(\{p_i\}, \{t_i\}) = \frac{1}{N_{\cls}}\sum_i L_{\cls}(p_i, p^{*}_i) + \lambda\frac{1}{N_{\reg}}\sum_i  p^{*}_i L_{\reg}(t_i, t^{*}_i);
 		\end{equation}
-		It jointly minimised  the ``objectness'' classification  \(L_{\cls}\) for an anchor \(i\) in the minibatch and bounding box regression term \(L_{\reg}\), balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground-truth box with an Intersection-over-Union (IoU) ratio above threshold \(\tau = 0.7\).
+		\(p_i\) represents the probability that anchor \(i\) is an object; \(p^{*}_i\) is the label of this anchor (\(1\) when it significantly overlaps a ground-truth box) and \(t_i, t^{*}_i\) encode the anchor's and ground-truth's coordinates, respectively.
+
+		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground-truth box with an Intersection-over-Union (IoU) ratio above threshold \(\tau = 0.7\).
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Training}\label{sec:frcnn_train}
-		The \FRCNN{} architecture can be trained end-to-end by jointly minimising the (weighted) sum of the RPN loss and the classification loss, as shown in \autoref{fig:faster_rcnn}. The forward pass generates box proposals that the classifier considers to be fixed for its training. This easy implementation ignores the gradients with regards to the coordinates of the proposal boxes, so it is only an approximation. However, its results are close to those obtained by alternating the training of the two networks, while being significantly faster.
+		In addition to the RPN, the \FRCNN{} architecture also needs to classify the generated proposals. For this, it uses the Fast R-CNN architecture and trains both of them at the same time, as shown in \autoref{fig:faster_rcnn}. The forward pass generates box proposals that the classifier considers to be fixed for its training. This easy implementation ignores the gradients with regards to the coordinates of the proposal boxes, so it is only an approximation of the joint training procedure. However, its results are close to those obtained by alternating the training of the two networks, while being significantly faster.
 
-		In order to speedup the training process, we make use of transfer learning and only fine-tune a detector that performs well on the ImageNet challenge. To this end, we replace the final softmax layer so that it only predicts among two classes: \texttt{text} or \texttt{background}.
+		Instead of training the whole architecture from scratch, we gain significant time by using transfer learning and starting with a model that performs well on the ImageNet challenge. We replace its final softmax layer so that it only predicts among our two classes of interest: \texttt{text} or \texttt{background}.
 
 		We hypothesize that the object / not-object distinction is easier to make for text detection in white background documents than it is for an ImageNet object. Therefore, we set hyperparameter \(\lambda = 2\) in order to give preference to the localisation loss. Moreover, in order to account for text's wide aspect ratio and relatively constant height in our documents, we generate similarly wide anchors (ratios \(\{2, 4, 6, 8, 10\}\)) with a limited set of scales (heights of \(\{50, 75, 100\}\)px). This further helps the box regression part to converge.
 
-		We use the stochastic gradient descent (SGD) optimiser with momentum, on batches of 1 input image. Note, however, that a minibatch is formed of bounding boxes, so many candidates can be generated from a single input image and a set of anchors.
+		We use the stochastic gradient descent (SGD) optimiser with momentum, on batches of 1 input image. Note, however, that a minibatch is formed of bounding boxes, so many candidates can be generated from a single input image and a set of anchors. Several hyper-parameters control the composition of the batches:
+		\begin{description}
+			\item[number of proposals (\(\mathit{value} = 300\))] How many object proposals are generated in each batch.
+
+			\item[positive to negative ratio (\(\mathit{value} = 0.5\))] For a robust classification and convergence of ``objectness'' score, it is important that examples of both positive and negative candidates are generated.
+
+			\item[positive IoU threshold (\(\tau_{+} = 0.7\))] An anchor is considered positive when \(\mathit{overlap}(\mathit{anchor}, \mathit{truthBox}) > \tau_+\). While \(0.7\) can be considered low for text objects (see \autoref{fig:overlap}), setting this value too high in the early stages leads to a lower number of positive candidate and slows down convergence of \(L_{cls}\).
+
+			\item[negative IoU threshold (\(\tau_{-} = 0.3\))] Similar to \(\tau_{+}\), but for marking candidates as negative examples.
+
+			\item[NMS confidence threshold (\(\mathit{value} = 0.0\))] When a candidate has a low confidence score, we can supress it from contributing to the loss. We effectively disable this filter because we want to force the network to give high-confidence predictions, therefore it should learn from all examples.
+
+			\item[NMS IoU threshold (\(\mathit{value} = 0.7\))] When several proposals overlap each other, we should keep only one of them in order to encourage proposal's diversity. This parameter controls when we can consider that a proposal is redundant to another one, in terms of their overlap.
+
+		\end{description}
+
+		On every experiment we monitor the training progress by intermittently evaluating the model on a validation dataset of images from the same category. The training is stopped once there is no significant improvement for more than two epochs, despite a decreasing learning rate.
 
 
 %========================================================================================
 
 
 \section{Training data}\label{sec:detection_data}
-	Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality. The rest of the section shows how we transition from the clean and neat RIMES database \citep{rimes} to a format that helps the algorithm generalise to our use case.
+	Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality. The rest of the section shows how we transition from the clean and neat handwriting database to a format that helps the algorithm generalise to our use case.
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{The RIMES database}\label{sec:rimes}
-		The RIMES database is the result of a huge data collection effort by the French ministries of defense and research which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)).
+		The RIMES database \citep{rimes} is the result of a huge data collection effort by the French ministries of defense and research, which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)).
 
 	%----------------------------------------------------------------------------------------
 
@@ -82,7 +103,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 		In our comparisons, we will refer to this dataset as \ds{Collage}.
 
-		\todo{We noted that this model performs well on validation, but the transfer does not generalise. The cause is the sampling of negative anchors, which are almost inevitably white. In addition, the line lengths do not vary too much.}
+		\todo{We noted that this model performs well on validation, but the transfer does not generalise. The cause is the sampling of negative anchors, which are almost inevitably white. In addition, the line lengths do not vary too much, neither the heights (which are bigger than our text) therefore bad regression of bboxes.}
 
 		\begin{figure}
 			\centering
@@ -109,11 +130,11 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Filled templates}
-		To address the limitations of the \ds{Collage} dataset, we propose to generate documents which resemble more the real ones. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This gets as close as possible to real data without having to go through an expensive manual labelling process.
+		To address the limitations of the \ds{Collage} dataset, we propose to generate documents which resemble more the real ones. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
 
 		A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted to the right of the placeholder's edge with a random amount. We investigate two possible text sources for filling the placeholder.
 
-		The first one consists of images of individual words from the RIMES database. These are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, handwriting styles from multiple authors would be combined on the same line and in the same document section.
+		The first one consists of images of \emph{individual} words from the RIMES database. These are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, handwriting styles from multiple authors would be combined on the same line and in the same document section.
 
 		The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines usually do not fit inside the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
 		\noindent\begin{minipage}{\linewidth}
@@ -129,7 +150,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\end{minipage}
 		\\
 
-		To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 75\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines follow each other from the same letter, so there is writer consistency for a good part of a template, just like in the real world.
+		To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 75\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
 
 		\begin{figure}
 			\centering
@@ -141,18 +162,18 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	%----------------------------------------------------------------------------------------
 
 		\subsubsection{Baseline detection}
-			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple algorithm to find the baseline row \(r_b\) of a text image \(\ma{I}\) (\autoref{fig:baseline}) :
+			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple algorithm to find the baseline row \(r_b\) of a text image \(\ma{I}\) of size \(H \times W\) (\autoref{fig:baseline}) :
 			\noindent\begin{minipage}{\linewidth}
 			\begin{enumerate}
 				\item project the rows of the image by averaging the pixel values: \[
 					\ve{p}[r] = \frac{1}{W} \sum_c I[r,c]
 				\]
-				\item let \(m = \mathrm{median}(\ve{p})\)
-				\item the baseline is the first row \(r_b\) in reverse order where \(\ve{p}[r_b] > m\).
+				\item let \(m = \operatorname{median}(\ve{p})\)
+				\item the baseline is the first row \(r_b\) where \(\ve{p}[r_b] > m\), \(b = \overline{n, 1}\).
 			\end{enumerate}
 			\end{minipage}\\
 
-			This algorithm works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
+			This algorithm works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another text line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
 
 			\begin{figure}[h!]
 				\centering
@@ -196,6 +217,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 
 \section{Connectionist Text Proposal Network}\label{sec:ctpn}
+	% http://i.cs.hku.hk/~kykwong/publications/wliu_bmvc16.pdf This has a good simple explanation of ResNet and LSTM and what-not
+
+
 	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
 %----------------------------------------------------------------------------------------
 
@@ -204,6 +228,16 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 
 \section{Results}\label{sec:detection_results}
+	This gives an overview of object detection evaluation:
+
+	% https://www.researchgate.net/profile/Rangachar_Kasturi/publication/220928471_Performance_Evaluation_of_Object_Detection_Algorithms/links/54c91dd00cf25087c4ec62fd.pdf
+
+	this evaluates text detection in 2 simple numbers (P, R), in terms of pixels
+
+	http://vision.soic.indiana.edu/papers/textevaluation2000das.pdf
+
+	\todo{Evaluation method: goal-directed approach = couple with text recognizer; see % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.332.3461&rep=rep1&type=pdf
+	}
 	\todo{
 		Compare all \FRCNN{} with \CTPN{}
 	}

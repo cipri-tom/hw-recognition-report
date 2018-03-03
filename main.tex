@@ -11,7 +11,6 @@
 \usepackage[dvipsnames]{xcolor}         % more color choices
 \usepackage[english=british]{csquotes} % for correct use of `` '' ... TODO!!
 \usepackage{url}            % typeset URL's sensibly
-\usepackage{enumitem} % configure labels of items in enumerations i.e. i), ii)
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
 \usepackage{float}
@@ -29,6 +28,10 @@
     \geometry{textheight=241mm}%
   \fi
 }
+
+\usepackage{enumitem} % configure labels of items in enumerations i.e. i), ii)
+\setlist[description]{style=nextline,font=\normalfont\textbullet\space,labelindent=\parindent}
+
 
 \usepackage{natbib}
 \setcitestyle{authoryear,round}
