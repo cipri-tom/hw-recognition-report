@@ -1,4 +1,4 @@
-%!TEX root = main.tex
+%!TEX root = ../main.tex
 % Chapter 1
 
 \chapter{Introduction} % Main chapter title
@@ -24,17 +24,23 @@ Given the loose requirements above, the scope of the project was set to be an ex
 
 During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
 
+\todo{
+% http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf
+This has some examples of `exceptional' images for OCR systems. These kind of difficulties are the normal images for us (show examples)
+}
 %----------------------------------------------------------------------------------------
 
 \subsection{Format}
 	Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\autoref{fig:standard_tools}) on our problem. We believe this is due to:
 
-	\begin{description}[style=nextline,font=\normalfont\textbullet\space,labelindent=\parindent]
+	\begin{description}
 		% \item the irregular format
 		\item[the irregular format] Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents.
 
 		% \item a mix of styles
 		\item[a mix of styles] OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
+
+		\item[Constraints] \todo{unconstrained recognition (no lexicon)}
 	\end{description}
 
 	We can note, however, that the statements \emph{do} subscribe to a certain, albeit non-standard, format. Text entry zones are indicated by a line, preceded with the name of the field in the language of the country. These are logically grouped into categories such as Policyholder, Vehicle, Insurance company etc., and each category has a unique identifying number (in the upper left corner). The personal information of the two persons is separated on the left and right sides by a set of checkboxes which describe the accident conditions.
@@ -51,21 +57,17 @@ During phase zero of the project, we carried out extensive data screening in ord
 
 	However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
 	% TODO: remove whitespce before this list
-	\begin{enumerate}
-		\item choose the format of the input data
-		\item[] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
+	\begin{description}
+		\item[choose the format of the input data] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
 
 		% TODO: find a better word for "actors"
 		% TODO: show pictures
-		\item use the available space to their pleasing
-		\item[] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them.
+		\item[use the available space to their pleasing] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them \todo{show example}.
 
-		\item{use their natural handwriting \label{itm:natural_handwriting}}
-		\item[] This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
+		\item[use their natural handwriting] \label{itm:natural_handwriting} This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
 
-		\item use any vocabulary they consider suitable
-		\item[] This often results in non-standard abbreviations or partial words (\autoref{fig:oov_words}).
-	\end{enumerate}
+		\item[use any vocabulary they consider suitable] This often results in non-standard abbreviations or partial words (\autoref{fig:oov_words}).
+	\end{description}
 
 
 %========================================================================================
@@ -90,13 +92,9 @@ During phase zero of the project, we carried out extensive data screening in ord
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Detection}\label{sec:related_detection}
-
 		All the systems mentioned above focus solely on transcribing an already-segmented piece of text which comes from a clean database. In the real world, however, it is necessary to first locate the text and only then we can transcribe it.
 
-	% TODO: use the cireșan below, in detection
-
 		In the context of document analysis and form processing, classic approaches generally use a bottom-up strategy \citep{bottom_up}. After a binarisation step, foregroung pixels are grouped into connected components. A filtering step based on blob's size is then applied in order to remove noise. Printed characters are separated from handwritten ones via profile projection matching \citep{profile_matching,moysset2014a2ia} or template matching \citep{template_matching}. Characters are grouped into words and text lines based on spatial proximity together with a Markov Random Field that models the dependency of neighbouring segmentes \citep{detection_mrf,detection_mrf2}. Alternatively, \citet{top_down} propose a top-down segmentation algorithm, but this is more suited for documents which present a well-formed Manhattan structure.
-
 
 		Since \citet{ciresan} proved the high effectiveness of CNNs not only for text recognition, but also for a wide range of image classification tasks, they have been used to achieve high performance also in object detection. Two different meta-architectures dominate the field: ROI-based and direct methods.
 
@@ -104,9 +102,12 @@ During phase zero of the project, we carried out extensive data screening in ord
 
 		The second meta-architecture poses detection as a regression problem and passes the input image only once through a CNN. For example, \citet{ssd} predict class probability and offsets from a default bounding box at each location in the feature map, on multiple levels. Since they still use a set of anchors with a limited choice of aspect ratios, it fails to recognise long texts. \Citet{textboxes} fix this problem by using default boxes with large aspect ratios plus irregular $1 \times 5$ convolutional layers.
 
-		The text-specialised methods above perform \emph{bounding box} detection at word or sentence level. Alternatively, \citet{moysset_whereToStart} detect only the height and the left start of a text line by using an architecture that alternates convolutional and MD-LSTM layers. Then they delegate the task of finding the end of the line to the text recognition system.
+		The text-specialised methods above perform \emph{bounding box} detection at word or sentence level. Alternatively, \citet{moysset_whereToStart} detect only the height and the left start of a text line by using an architecture that interleaves convolutional and MD-LSTM layers. Then they delegate the task of finding the end of the line to the text recognition system.
 
-		We believe it is necessary to also include here the work of \citet{attention_french} in the field of \emph{scene text} detection and recognition which, in our opinion, did not receive enough attention in the field of document analysis. Their approach does not separate detection and recognition. Instead, they couple the convolutional feature maps with a two-dimensional attention model and pass them through an LSTM. In this way, the model can jointly learn where to look at each time step, and how to transcribe that information.
+	%----------------------------------------------------------------------------------------
+
+	\subsection{End-to-end}\label{sec:related_e2e}
+		In the very recent years, a new class of approaches emerged: \emph{end-to-end} architectures. These try to locate and transcribe text in a single pass, with errors from the transcription propagated back to the detection part. \Citet{attention_french} do so by coupling the convolutional feature maps with a two-dimensional attention model which they pass through an LSTM. In this way, the model can jointly learn where to look at each time step, and how to transcribe that information. However, this system can not identify the location of text in the image as a bounding box, only as a sparse attention map. \Citet{stn_ocr} overcome this limitation by using a spatial transformer network \citep{stn} for detection coupled with a ResNet-CNN for recognition. They acknowlege the system is difficult to train, requiring careful curriculum learning. Finally, we note that both of these approaches operate on printed text so they may not work well for handwriting. This is especially important for the latter one, as the recognition CNN processes independent regions of the image, thus relying on separation between characters.
 
 
 
