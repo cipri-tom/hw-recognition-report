@@ -130,36 +130,39 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Filled templates}
-		To address the limitations of the \ds{Collage} dataset, we propose to generate documents which resemble more the real ones. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
+		%----------------------------------------------------------------------------------------
+		% subsubsection: general description
 
-		A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted to the right of the placeholder's edge with a random amount. We investigate two possible text sources for filling the placeholder.
+			To address the limitations of the \ds{Collage} dataset, we propose to generate documents which resemble more the real ones. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
 
-		The first one consists of images of \emph{individual} words from the RIMES database. These are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, handwriting styles from multiple authors would be combined on the same line and in the same document section.
+			A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted to the right of the placeholder's edge with a random amount. We investigate two possible text sources for filling the placeholder.
 
-		The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines usually do not fit inside the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
-		\noindent\begin{minipage}{\linewidth}
-		\begin{enumerate}
-			\item use the line transcription labels to find the number of words \(n\)
-			\item project the image columns horizontally, accumulating their sum into \[
-				\ve{p}[c] = \sum_r \ma{I}[r,c]
-			\]
-			\item find the continuous runs of zero \(\ve{z} = \{ (i, j) \mid \ve{p}[k] = 0, \forall k \in [i, j] \}\); these correspond to gaps between letters (marked in red in \autoref{fig:baseline_ok})
-			\item take \(n\) widest gaps \(\ve{z}'\) from \(\ve{z}\), with the gap width \(w := j - i\)
-			\item split at columns \(c_k = \frac{j_k - i_k}{2}, \forall (i_k, j_k) \in \ve{z}'\).
-		\end{enumerate}
-		\end{minipage}
-		\\
+			The first one consists of images of \emph{individual} words from the RIMES database. These are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, handwriting styles from multiple authors would be combined on the same line and in the same document section.
 
-		To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 75\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
+			The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines usually do not fit inside the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
+			\noindent\begin{minipage}{\linewidth}
+			\begin{enumerate}
+				\item use the line transcription labels to find the number of words \(n\)
+				\item project the image columns horizontally, accumulating their sum into \[
+					\ve{p}[c] = \sum_r \ma{I}[r,c]
+				\]
+				\item find the continuous runs of zero \(\ve{z} = \{ (i, j) \mid \ve{p}[k] = 0, \forall k \in [i, j] \}\); these correspond to gaps between letters (marked in red in \autoref{fig:baseline_ok})
+				\item take \(n\) widest gaps \(\ve{z}'\) from \(\ve{z}\), with the gap width \(w := j - i\)
+				\item split at columns \(c_k = \frac{j_k - i_k}{2}, \forall (i_k, j_k) \in \ve{z}'\).
+			\end{enumerate}
+			\end{minipage}
+			\\
 
-		\begin{figure}
-			\centering
-			\includegraphics[width=\linewidth]{template_empty}
-			\caption[Document template]{An empty document template. Note that the placeholders are slightly bigger than the location for text entry in order to allow text that goes out of bounds. Also, there are placeholders in places that do not correspond to any field, which matches how people use these documents.}
-			\label{fig:template}
-		\end{figure}
+			To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 75\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
 
-	%----------------------------------------------------------------------------------------
+			\begin{figure}
+				\centering
+				\includegraphics[width=\linewidth]{template_empty}
+				\caption[Document template]{An empty document template. Note that the placeholders are slightly bigger than the location for text entry in order to allow text that goes out of bounds. Also, there are placeholders in places that do not correspond to any field, which matches how people use these documents.}
+				\label{fig:template}
+			\end{figure}
+
+		%----------------------------------------------------------------------------------------
 
 		\subsubsection{Baseline detection}
 			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple algorithm to find the baseline row \(r_b\) of a text image \(\ma{I}\) of size \(H \times W\) (\autoref{fig:baseline}) :
@@ -198,8 +201,6 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 				\label{fig:baseline}
 			\end{figure}
 
-			\todo{why it is needed. Doesn't work if rotated. List a couple of tried methods (filtering, min-after-max). Show results? (on words and on lines) }
-
 		%----------------------------------------------------------------------------------------
 
 		\subsubsection{Filling with generator}
@@ -210,6 +211,25 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\stopToDo
 
 		%----------------------------------------------------------------------------------------
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Results}\label{sec:frcnn_results}
+		\begin{figure}[h!]
+			\centering
+			\begin{subfigure}{.49\linewidth}
+				\includegraphics[width=\linewidth]{frcnns_by_iou.png}
+				\caption{}
+				\label{fig:frcnns_by_iou}
+			\end{subfigure}
+			\begin{subfigure}{.49\linewidth}
+				\includegraphics[width=\linewidth]{frcnns_by_scores.png}
+				\caption{}
+				\label{fig:frcnns_by_scores}
+			\end{subfigure}
+			\caption[\FRCNN{} results]{\todo{...}}
+			\label{fig:frcnn_results}
+		\end{figure}
 
 
 
