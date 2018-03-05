@@ -55,13 +55,14 @@
 %% =============================================================================
 
 \usepackage{amsmath, amssymb}
-\DeclareMathOperator*{\argmin}{argmin}
-\DeclareMathOperator*{\iou}{IoU}
-\providecommand{\norm}[1]{\lVert#1\rVert}
+\DeclareMathOperator*{\argmin}{argmin} % * means the argument in _{} is placed below rather than to the right
+\DeclareMathOperator{\iou}{IoU}
+\DeclareMathOperator{\AP}{\operatorname{AP}_{\iou > 0.5}}
+\providecommand{\norm}[1]{\lVert#1\rVert} % unlike \newcommand, this does nothing if \norm already exists
 \newcommand{\ve}[1]{\mathbf{#1}} % for displaying a vector
 \newcommand{\ma}[1]{\mathrm{#1}} % for displaying a matrix
-\def\cls{\mathit{cls}} % for RPN loss
-\def\reg{\mathit{reg}}
+\newcommand{\cls}{\mathit{cls}} % for RPN loss
+\newcommand{\reg}{\mathit{reg}}
 
 
 \usepackage{graphicx}

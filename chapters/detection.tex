@@ -69,13 +69,13 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 			\item[positive to negative ratio (\(\mathit{value} = 0.5\))] For a robust classification and convergence of ``objectness'' score, it is important that examples of both positive and negative candidates are generated.
 
-			\item[positive IoU threshold (\(\tau_{+} = 0.7\))] An anchor is considered positive when \(\mathit{overlap}(\mathit{anchor}, \mathit{truthBox}) > \tau_+\). While \(0.7\) can be considered low for text objects (see \autoref{fig:overlap}), setting this value too high in the early stages leads to a lower number of positive candidate and slows down convergence of \(L_{cls}\).
+			\item[positive IoU threshold (\(\tau_{+} = 0.7\))] An anchor is considered positive when \(\mathit{overlap}(\mathit{anchor}, \mathit{truthBox}) > \tau_+\). While \(0.7\) can be considered low for text objects (see \autoref{fig:text_overlap_example}), setting this value too high in the early stages leads to a lower number of positive candidate and slows down convergence of \(L_{cls}\).
 
 			\item[negative IoU threshold (\(\tau_{-} = 0.3\))] Similar to \(\tau_{+}\), but for marking candidates as negative examples.
 
 			\item[NMS confidence threshold (\(\mathit{value} = 0.0\))] When a candidate has a low confidence score, we can supress it from contributing to the loss. We effectively disable this filter because we want to force the network to give high-confidence predictions, therefore it should learn from all examples.
 
-			\item[NMS IoU threshold (\(\mathit{value} = 0.7\))] When several proposals overlap each other, we should keep only one of them in order to encourage proposal's diversity. This parameter controls when we can consider that a proposal is redundant to another one, in terms of their overlap.
+			\item[NMS IoU threshold (\(\tau_{\textsc{nms}} = 0.7\))] When several proposals overlap each other, we should keep only one of them in order to encourage proposal's diversity. This parameter controls when we can consider that a proposal is redundant to another one, in terms of their overlap.
 
 		\end{description}
 
@@ -85,17 +85,22 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 %========================================================================================
 
 \section{Evaluation framework}\label{sec:detection_eval}
-The lack of a \emph{cost} or risk associated with a false positive detection makes the assessment of an algorithm a very difficult task as it requires a trade-off between different types of errors. Standard object detection challenges such as PASCAL VOC \citep{pascal_voc} required participants to rank their results by a score, commonly referred to as \emph{confidence}. This allows the evaluation of a trade-off between false positives and false negatives by assessing the area under the precision/recall curve. To this end, the Average Precision (AP) is used:\[
+The lack of a \emph{cost} or risk associated with a false positive detection makes the assessment of an algorithm a very difficult task as it requires a trade-off between different types of errors. Standard object detection challenges such as PASCAL VOC \citep{pascal_voc} required participants to rank their results by a score, commonly referred to as \emph{confidence}. This allows the evaluation of a trade-off between false positives and false negatives by assessing the area under the precision/recall curve. To this end, the Average Precision is used:\[
 	\operatorname{AP} = \frac{1}{11} \sum_{r \in [0,1]} p(r),
 \] which is the mean of precisions \(p\) computed at eleven equally spaced recall values \(r \in [0,1]\).
 
-There are two important observations about the above measure. First, a great importance is given to the confidence score, since recall and precision are defined by only considering examples ranked above a given rank. Second, it does \emph{not} define what a positive result means. For object detection, a predicted bounding box \(B_p\) is considered positivite if it overlaps a ground-truth box \(B_{gt}\) with \(\iou(B_p, B_{gt}) > 0.5\), where \[
+Two essential observations need to be made. First, a great importance is given to the confidence score, since recall and precision are defined by only considering examples ranked above a given rank. Second, the measure does \emph{not} define what a positive result means. For object detection, a predicted bounding box \(B_p\) is positively mapped to \mbox{ground-truth} box \(B_{gt}\) when their overlap exceeds a given threshold \(\tau\). The overlap is defined as \[
 	\iou(B_p, B_{gt}) = \frac{\mathit{area}(B_p \cap B_{gt})}{\mathit{area}(B_p \cup B_{gt})}.
-\] \todo{Problem: I'm using IoU in hyperparams of FRCNN, which comes before this section.}
+\] In general, the threshold is set at \(\tau = 0.5\) and the measure is denoted by \(\AP\).
 
-Since text detection is a particular case of object detection, it generally subscribes to the same evaluation criteria. However, text is more than a simple object with binary presence; it consists of a sequence of characters, all of which are mandatory and of \emph{equal} importance to the meaning. This is in contrast to objects in general images such as those in the PASCAL VOC database. While these also present a hierarchical structure (e.g.\ a cat has eyes, ears, legs, tail etc.), the presence of their sub-elements is not always mandatory; on the contrary, a subset of composing elements is almost always hidden due to self occlusions. This allows some partial detections to be considered valid in the context of objects (see \autoref{fig:cindy}). Text detection cannot afford such flexibility, since we aim to use the detections in a subsequent step of transcription. This requires that bounding boxes include all relevant text and, ideally, no other text fragments such as parts of the line above or below (see \autoref{fig:text_overlap_example}). Considering that in our documents text lines are close to each other, we demand the detections to be as tight as possible around the text.
+\todo{Problem: I'm using IoU in hyperparams of FRCNN, which comes before this section.}
 
-\begin{figure}[h]
+Since text detection is a particular case of object detection, it generally subscribes to the same evaluation criteria. However, text is more than a simple object with binary presence; it consists of a sequence of characters, all of which are mandatory and of \emph{equal} importance to the meaning. This is in contrast to objects in general images such as those in the PASCAL VOC database. While these also present a hierarchical structure (e.g.\ a cat has eyes, ears, legs, tail etc.), the presence of their sub-elements is not always mandatory; on the contrary, a subset of composing elements is almost always hidden due to self occlusions. This allows some partial detections to be considered valid in the context of objects (see \autoref{fig:cindy}). Text detection cannot afford such flexibility, since we aim to use the detections in a subsequent step of transcription. This requires that bounding boxes include all relevant text and, ideally, no other text fragments such as parts of the line above or below (see \autoref{fig:text_overlap_example}).
+
+Considering that in our documents text lines are close to each other, we demand the detections to be as tight as possible around the text. In addition, having a high recall is more important than predicting with a high confidence, since the transcription phase can easily ignore false positives. For this reason, the comparison in \autoref{sec:frcnn_results} will consider these two criteria for comparing different experiments. However, given the lack of a detection baseline in such challenging documents, we based our intermediate decisions on the standard measure of \(\AP\) which allowed us to compare with the performance of the same algorithm on a different task.
+
+
+\begin{figure}
 	\begin{subfigure}[b]{0.49\linewidth}
 		\includegraphics{cindy}
 		\caption{\label{fig:cindy}}
@@ -117,8 +122,6 @@ Since text detection is a particular case of object detection, it generally subs
 
 \section{Generating data for training experiments}\label{sec:detection_experiments}
 	Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality. The rest of the section shows how we transition from the clean and neat handwriting database to a format that helps the algorithm generalise to our use case.
-
-	To perform intermediate evaluations of trained models we used the standard PASCAL VOC measure which scores them according to the average precision (AP) at 0.5 overlap (\(\operatorname{AP@}0.5\operatorname{IoU}\)). This means that each predicted box is considered a true positive if
 
 	%----------------------------------------------------------------------------------------
 
