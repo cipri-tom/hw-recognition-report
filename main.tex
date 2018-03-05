@@ -13,8 +13,8 @@
 \usepackage{url}            % typeset URL's sensibly
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
-\usepackage{float}
 \usepackage{tabu}
+% \usepackage{floatrow}       % automatically centers floats
 
 \usepackage[a4paper,textwidth=159mm, hmargin ratio=1:1, vmargin ratio=1:1, verbose]{geometry}
 \makeatletter
@@ -56,6 +56,7 @@
 
 \usepackage{amsmath, amssymb}
 \DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\iou}{IoU}
 \providecommand{\norm}[1]{\lVert#1\rVert}
 \newcommand{\ve}[1]{\mathbf{#1}} % for displaying a vector
 \newcommand{\ma}[1]{\mathrm{#1}} % for displaying a matrix
@@ -65,19 +66,33 @@
 
 \usepackage{graphicx}
 \graphicspath{{./images/}}
+\setkeys{Gin}{width=\linewidth} % set \includegraphics default width
 
-\usepackage{caption,subcaption,regexpatch}
+\usepackage{caption,subcaption}
 % \subref -> '(a)' rather than just 'a'
 \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
-\captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 \renewcommand\thesubfigure{(\alph{subfigure})}
 \makeatletter
 \renewcommand\p@subfigure{\thefigure~}
 \makeatother
+% make the caption a bit shorter than the rest of the text, with bold font for label
+\captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 
-\makeatletter
-\xpatchcmd*{\@caption}{#3}{#2~--~#3}{}{}
-\makeatother
+% try to include the short caption title in the long one
+% it doesn't work https://tex.stackexchange.com/questions/127921/
+% \usepackage{xpatch}
+% \tracingpatches
+% \makeatletter
+% \patchcmd{\@caption}{#3}{#2~--~#3}{}{}
+% % \xshowcmd\@caption
+% \makeatother
+
+% \@caption=\long macro:
+% #1[#2]#3->\par \addcontentsline {\csname ext@#1\endcsname }{#1}{\protect \numbe
+% rline {\csname the#1\endcsname }{\ignorespaces #2}}\begingroup \@parboxrestore
+% \if@minipage \@setminipage \fi \normalsize \@makecaption {\csname fnum@#1\endcs
+% name }{\ignorespaces #3}\par \endgroup .
+% <recently read> \@caption
 
 \input{hyperref_config}
 
