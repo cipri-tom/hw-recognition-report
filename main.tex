@@ -4,6 +4,8 @@
 \usepackage{pdfsync}        % allows clicking in PDF to take you back to the text
 
 \usepackage{lmodern}        % use modern latin fonts
+% \usepackage{palatino}        % use modern latin fonts
+% \usepackage{times}        % use modern latin fonts
 \usepackage[T1]{fontenc}    % use 8 bit output font encoding with more glyphs
 \usepackage[utf8]{inputenc} % so you can type ă
 % \usepackage{siunitx}        % automatically formats numbers with spaces and all that
@@ -14,7 +16,7 @@
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
 \usepackage{tabu}
-% \usepackage{floatrow}       % automatically centers floats
+\usepackage{floatrow}       % automatically centers floats
 
 \usepackage[a4paper,textwidth=159mm, hmargin ratio=1:1, vmargin ratio=1:1, verbose]{geometry}
 \makeatletter
@@ -65,6 +67,12 @@
 \newcommand*{\ma}[1]{\mathrm{#1}} % for displaying a matrix
 \newcommand*{\cls}{\mathit{cls}} % for RPN loss
 \newcommand*{\reg}{\mathit{reg}}
+% this makes the symbol := look nicer
+\mathchardef\ordinarycolon\mathcode`\:
+\mathcode`\:=\string"8000
+\begingroup \catcode`\:=\active
+  \gdef:{\mathrel{\mathop\ordinarycolon}}
+\endgroup
 
 
 \usepackage{graphicx}
@@ -108,6 +116,8 @@
 % \algtext*{Indent}
 % \algtext*{EndIndent}
 
+% \usepackage{relsize}        % allows you to resize individual characters e.g. underscore
+% \renewcommand{\_}{\textscale{.5}{\textunderscore}}
 
 \newcommand*{\pkg}[1]{\textsf{\detokenize{#1}}} % typeset the name of a package: \pkg{tum_ardrone}
 \newcommand*{\ds}[1]{\textsl{\textsf{\detokenize{#1}}}} % and of a dataset \ds{RIMES}
