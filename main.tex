@@ -18,7 +18,9 @@
 \usepackage{tabu}
 \usepackage{floatrow}       % automatically centers floats
 
-\linespread{1.25}           % adjust line spacing: 1.25 -> 1.5 lines
+% set line space nicely (only for text, not captions etc)
+\usepackage{setspace}
+\onehalfspacing
 
 \usepackage[a4paper,textwidth=159mm, hmargin ratio=1:1, vmargin ratio=1:1, verbose]{geometry}
 \makeatletter
@@ -127,7 +129,7 @@
   % see https://tex.stackexchange.com/q/418649/76755 for how to mitigate this,
   % but then the command cannot be used as an argument
   \usepackage{xparse}
-  \RenewDocumentCommand{\_}{}{\scalebox{0.5}[1]{\textunderscore}}
+  \RenewDocumentCommand{\_}{}{\scalebox{0.65}[1]{\textunderscore}}
   \ExplSyntaxOn
   \NewDocumentCommand{\changeunderscore}{m}
   {

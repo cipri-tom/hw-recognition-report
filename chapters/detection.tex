@@ -255,14 +255,20 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\label{fig:template_gray}
 		\end{figure}
 
-		We generated another dataset, \ds{Template_bin}, of same size as \ds{Template}, where we binarised text before pasting it into the documents. Given the uniform illumination, a global thresholding technique worked well, with the threshold chosen by Otsu's method. The model trained on this dataset converged after 4500 steps and has a validation \(\AP \simeq 0.83 \). It also generalizes better than previous ones on the \ds{TEST} dataset, with an \(\AP \simeq 0.37\).
+		We generated another dataset, \ds{Template_bin}, of same size as \ds{Template}, where we binarised text before pasting it into the documents (\autoref{fig:template_bin_detection}). Given the uniform illumination, a global thresholding technique worked well, with the threshold chosen by Otsu's method. The model trained on this dataset converged after 4500 steps and has a validation \(\AP \simeq 0.83 \). It also generalizes better than previous ones on the \ds{TEST} dataset, with an \(\AP \simeq 0.37\).
+
+		\begin{figure}
+			\includegraphics{template_bin_detection}
+			\caption[\ds{Template_bin} example]{Example of template filled with binarised text from the RIMES database. Black shows ground truth boxes, and green the detection result. This particular example also presents some bad ground truth examples, marked by red numbers. Some of them are not detected (1, 2) while some are detected with high precision (3, 4). }
+			\label{fig:template_bin_detection}
+		\end{figure}
 
 	%----------------------------------------------------------------------------------------
 
 
 %========================================================================================
 
-\section{\FRCNN{} Results}\label{sec:frcnn_results}
+\section{Faster R-CNN Results}\label{sec:frcnn_results}
 
 	\begin{figure}[ht]
 		\begin{subfigure}{.49\linewidth}
@@ -309,13 +315,16 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	If we posit that the confidence score bears less importance in our context, we may approach the problem from a different angle, keeping in mind that we want the detection to be as tight as possible around the text. To this end, we let \(\operatorname{score}(B^p_k) = \iou(B^p_k, B^{gt}_k)\), where the mapping is again done greedily, and we measure \(R_\tau\) and \(P_\tau\). In this case it is more evident that the model trained on \ds{Template_bin} is superior to the others since it maintains a higher recall rate while we filter the boxes to be of increasingly higher quality (\autoref{fig:frcnns_recall_iou}). Moreover, it has a higher overlap precision on average, its worst boxes being of similar quality to those from \ds{Collage}-trained model (\autoref{fig:frcnns_prec_iou}).
 
-	In conclusion, we observe that \FRCNN{} is able to learn handwriting specific features and can use them to detect handwritten text reasonably well. For our model the confidence score of the detected boxes is less helpful in filtering them, but this is a small problem since false negatives can be filtered at a later time. Alternatively, it is likely that training for more steps would aid the model to better distinguish between text and text-like examples.
+	In conclusion, we observe that \FRCNN{} is able to learn handwriting specific features and it can use them to detect handwritten text reasonably well. For our model the confidence score of the detected boxes is less helpful for selecting high quality ones, but this is a small problem since false negatives can be filtered at a later time. Alternatively, it is likely that fine tuning on a subset of \ds{TEST} would aid the model to better distinguish between real text and text-like examples. We also note from results like \autoref{fig:template_bin_detection} that the model learnt to detect bounding boxes taller than the actual text due to inaccurate training examples.
 
 %========================================================================================
 
 
 \section{Connectionist Text Proposal Network}\label{sec:ctpn}
 	% http://i.cs.hku.hk/~kykwong/publications/wliu_bmvc16.pdf This has a good simple explanation of ResNet and LSTM and what-not
+
+	\todo{After we }
+	%----------------------------------------------------------------------------------------
 
 
 	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
