@@ -14,6 +14,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\begin{figure}
 		\includegraphics[width=0.85\linewidth]{fasterrcnn_diagram.pdf}
 		\caption[The \FRCNN{} architecture]{(credit to \cite{detection_benchmark}) \label{fig:faster_rcnn}}
+		% \caption[The architecture]{(credit to)}
 	\end{figure}
 
 	The task of object detection builds upon that of image classification. Architectures based on region proposals (see \autoref{sec:related_detection}) can be seen as a two stage algorithm: the first part extracts possible object bounding boxes as a sub-image of the input, while the second one predicts the class associated with each candidate. It is of no surprise then that object detection greatly benefits from the super-human accuracy of deep neural networks \citep{superhuman_classif}. We chose to pair the \FRCNN{} detection architecture with the \RESNET{} feature extractor \citep{resnet}, since this has been proven as a good trade-off between detection accuracy and speed on the standard challenge of ILSCVR \citep{detection_benchmark}. In what follows we present the main building blocks of this architecture.
@@ -50,9 +51,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\begin{equation}\label{eq:rpn_loss}
 		L(\{p_i\}, \{t_i\}) = \frac{1}{N_{\cls}}\sum_i L_{\cls}(p_i, p^{*}_i) + \lambda\frac{1}{N_{\reg}}\sum_i  p^{*}_i L_{\reg}(t_i, t^{*}_i);
 		\end{equation}
-		\(p_i\) represents the probability that anchor \(i\) is an object; \(p^{*}_i\) is the label of this anchor (\(1\) when it significantly overlaps a ground-truth box) and \(t_i, t^{*}_i\) encode the anchor's and ground-truth's coordinates, respectively.
+		\(p_i\) represents the probability that anchor \(i\) is an object; \(p^{*}_i\) is the label of this anchor (\(1\) when it significantly overlaps a ground truth box) and \(t_i, t^{*}_i\) encode the anchor's and ground truth's coordinates, respectively.
 
-		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground-truth box with an Intersection-over-Union (IoU) ratio above threshold \(\tau = 0.7\).
+		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground truth box with an Intersection-over-Union (IoU) ratio above threshold \(\tau = 0.7\).
 
 	%----------------------------------------------------------------------------------------
 
@@ -85,39 +86,39 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 %========================================================================================
 
 \section{Evaluation framework}\label{sec:detection_eval}
-The lack of a \emph{cost} or risk associated with a false positive detection makes the assessment of an algorithm a very difficult task as it requires a trade-off between different types of errors. Standard object detection challenges such as PASCAL VOC \citep{pascal_voc} required participants to rank their results by a score, commonly referred to as \emph{confidence}. This allows the evaluation of a trade-off between false positives and false negatives by assessing the area under the precision/recall curve. To this end, the Average Precision is used:\[
-	\operatorname{AP} = \frac{1}{11} \sum_{r \in [0,1]} p(r),
-\] which is the mean of precisions \(p\) computed at eleven equally spaced recall values \(r \in [0,1]\).
+	The lack of a \emph{cost} or risk associated with a false positive detection makes the assessment of an algorithm a very difficult task as it requires a trade-off between different types of errors. Standard object detection challenges such as PASCAL VOC \citep{pascal_voc} required participants to rank their results by a score, commonly referred to as \emph{confidence}. This allows the evaluation of a trade-off between false positives and false negatives by assessing the area under the precision/recall curve. To this end, the Average Precision is used:\[
+		\operatorname{AP} = \frac{1}{11} \sum_{r \in [0,1]} p(r),
+	\] which is the mean of precisions \(p\) computed at eleven equally spaced recall values \(r \in [0,1]\).
 
-Two essential observations need to be made. First, a great importance is given to the confidence score, since recall and precision are defined by only considering examples ranked above a given rank. Second, the measure does \emph{not} define what a positive result means. For object detection, a predicted bounding box \(B_p\) is positively mapped to \mbox{ground-truth} box \(B_{gt}\) when their overlap exceeds a given threshold \(\tau\). The overlap is defined as \[
-	\iou(B_p, B_{gt}) = \frac{\mathit{area}(B_p \cap B_{gt})}{\mathit{area}(B_p \cup B_{gt})}.
-\] In general, the threshold is set at \(\tau = 0.5\) and the measure is denoted by \(\AP\).
+	Two essential observations need to be made. First, a great importance is given to the confidence score, since recall and precision are defined by only considering examples ranked above a given rank. Second, the measure does \emph{not} define what a positive result means. For object detection, a predicted bounding box \(B^p\) is positively mapped to \mbox{ground truth} box \(B^{gt}\) when their overlap exceeds a given threshold \(\tau\). The overlap is defined as \[
+		\iou(B^p, B^{gt}) = \frac{\mathit{area}(B^p \cap B^{gt})}{\mathit{area}(B^p \cup B^{gt})}.
+	\] In general, the threshold is set at \(\tau = 0.5\) and the measure is denoted by \(\AP\).
 
-\todo{Problem: I'm using IoU in hyperparams of FRCNN, which comes before this section.}
+	\todo{Problem: I'm using IoU in hyperparams of FRCNN, which comes before this section.}
 
-Since text detection is a particular case of object detection, it generally subscribes to the same evaluation criteria. However, text is more than a simple object with binary presence; it consists of a sequence of characters, all of which are mandatory and of \emph{equal} importance to the meaning. This is in contrast to objects in general images such as those in the PASCAL VOC database. While these also present a hierarchical structure (e.g.\ a cat has eyes, ears, legs, tail etc.), the presence of their sub-elements is not always mandatory; on the contrary, a subset of composing elements is almost always hidden due to self occlusions. This allows some partial detections to be considered valid in the context of objects (see \autoref{fig:cindy}). Text detection cannot afford such flexibility, since we aim to use the detections in a subsequent step of transcription. This requires that bounding boxes include all relevant text and, ideally, no other text fragments such as parts of the line above or below (see \autoref{fig:text_overlap_example}).
+	Since text detection is a particular case of object detection, it generally subscribes to the same evaluation criteria. However, text is more than a simple object with binary presence; it consists of a sequence of characters, all of which are mandatory and of \emph{equal} importance to the meaning. This is in contrast to objects in general images such as those in the PASCAL VOC database. While these also present a hierarchical structure (e.g.\ a cat has eyes, ears, legs, tail etc.), the presence of their sub-elements is not always mandatory; on the contrary, a subset of composing elements is almost always hidden due to self occlusions. This allows some partial detections to be considered valid in the context of objects (see \autoref{fig:cindy}). Text detection cannot afford such flexibility, since we aim to use the detections in a subsequent step of transcription. This requires that bounding boxes include all relevant text and, ideally, no other text fragments such as parts of the line above or below (see \autoref{fig:text_overlap_example}).
 
-Considering that in our documents text lines are close to each other, we demand the detections to be as tight as possible around the text. In addition, having a high recall is more important than predicting with a high confidence, since the transcription phase can easily ignore false positives. For this reason, the comparison in \autoref{sec:frcnn_results} will consider these two criteria for comparing different experiments. However, given the lack of a detection baseline in such challenging documents, we based our intermediate decisions on the standard measure of \(\AP\) which allowed us to compare with the performance of the same algorithm on a different task.
+	Considering that in our documents text lines are close to each other, we demand the detections to be as tight as possible around the text. In addition, having a high recall is more important than predicting with a high confidence, since the transcription phase can easily ignore false positives. For this reason, the comparison in \autoref{sec:frcnn_results} will consider these two criteria for comparing different experiments. However, given the lack of a detection baseline in such challenging documents, we based our intermediate decisions on the standard measure of \(\AP\) which allowed us to compare with the performance of the same algorithm on a different task.
 
-\subsubsection*{Test data}\label{sec:detection_test_data}
+	\subsubsection*{Test data}\label{sec:detection_test_data}
 
-Given that our approaches rely on transfer learning, we need an objective way of comparing their performance. To this end, we constructed a \ds{TEST} dataset to provide ground truth labels on real-world data. This consists of 26 annotated statements which amount to approximately 1400 bounding boxes.
+	Given that our approaches rely on transfer learning, we need an objective way of comparing their performance. To this end, we constructed a \ds{TEST} dataset to provide ground truth labels on real-world data. This consists of 26 annotated statements which amount to approximately 1400 bounding boxes.
 
-\begin{figure}
-	\begin{subfigure}[b]{0.49\linewidth}
-		\includegraphics{cindy}
-		\caption{\label{fig:cindy}}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.49\linewidth}
-		\includegraphics{text_iou}
-		\vspace{2em} % no idea why this works. it was supposed to add space *between* the images, but oh well...
-		\includegraphics{text2_iou}
-		\caption{\label{fig:text_overlap_example}}
-	\end{subfigure}
-	\caption[Overlap examples]{Overlap examples: red shows ground-truth; green shows detection. In all cases \(\iou = 0.55\). While this is a valid detection threshold for a normal object, it is unsatisfactory for text recognition.
-	}
-	\label{fig:overlap_example}
-\end{figure}
+	\begin{figure}
+		\begin{subfigure}[b]{0.49\linewidth}
+			\includegraphics{cindy}
+			\caption{\label{fig:cindy}}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.49\linewidth}
+			\includegraphics{text_iou}
+			\vspace{2em} % no idea why this works. it was supposed to add space *between* the images, but oh well...
+			\includegraphics{text2_iou}
+			\caption{\label{fig:text_overlap_example}}
+		\end{subfigure}
+		\caption[Overlap examples]{Overlap examples: red shows ground truth; green shows detection. In all cases \(\iou = 0.55\). While this is a valid detection threshold for a normal object, it is unsatisfactory for text recognition.
+		}
+		\label{fig:overlap_example}
+	\end{figure}
 
 
 %========================================================================================
@@ -154,7 +155,7 @@ Given that our approaches rely on transfer learning, we need an objective way of
 			\caption[\ds{Collage} dataset]{
 				The \ds{Collage} dataset.
 				\subref{sfig:collage_clean}: Example of generated collage document with 3 juxtaposed paragraphs.
-				\subref{sfig:collage_detect}: The detection performed on such a document, with ground-truth in black and detection result in green.
+				\subref{sfig:collage_detect}: The detection performed on such a document, with ground truth in black and detection result in green.
 			}
 			\label{fig:collage}
 		\end{figure}
@@ -167,9 +168,9 @@ Given that our approaches rely on transfer learning, we need an objective way of
 
 			To address the limitations of the \ds{Collage} dataset and allow the model to learn more complex patterns, we propose to generate images which resemble more the real documents. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
 
-			A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted to the right of the placeholder's edge with a random amount. We investigate two possible text sources for filling the placeholder.
+			A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted horizontally inside the placeholder by a random amount. We investigate two possible text sources for filling the templates.
 
-			The first one consists of images of \emph{individual} words from the RIMES database. This has the advantage of tight bounding boxes around the text, which we established as an important criterion (see \autoref{sec:detection_eval}). Also, it allows us to keep the ground-truth text associated with each box, which could be beneficial for the transcription step. On the other hand, this source also poses some problems. First, words are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, words with ascenders and descenders would need to be aligned to their baseline, which is especially difficult to estimate for short words. Finally, handwriting styles from multiple authors would be combined on the same line and in the same document section.
+			The first one consists of images of \emph{individual} words from the RIMES database. This has the advantage of tight bounding boxes around the text, which we established as an important criterion in \autoref{sec:detection_eval}. Also, it allows us to keep the ground truth text associated with each box, which will also make them useful for the transcription step. On the other hand, this source also poses some problems. First, words are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, words with ascenders and descenders would need to be aligned to their baseline, which is especially difficult to estimate for short words. Finally, handwriting styles from multiple authors would be combined on the same line and in the same document section.
 
 			The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines usually do not fit inside the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
 			\noindent\begin{minipage}{\linewidth}
@@ -203,13 +204,13 @@ Given that our approaches rely on transfer learning, we need an objective way of
 					\ve{p}[r] = \frac{1}{W} \sum_c I[r,c]
 				\]
 				\item let \(m = \operatorname{median}(\ve{p})\)
-				\item the baseline is the first row \(r_b\) where \(\ve{p}[r_b] > m\), \(b = \overline{n, 1}\).
+				\item the baseline is the first row \(r_b\) where \(\ve{p}[r_b] > m\), \(b = \overline{H, 1}\).
 			\end{enumerate}
 			\end{minipage}\\
 
 			This algorithm works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another text line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
 
-			\begin{figure}[h!]
+			\begin{figure}[t]
 				\begin{subfigure}{\linewidth}
 					\includegraphics{baseline_ok}
 					\caption{Good and clean horizontal image}
@@ -233,67 +234,82 @@ Given that our approaches rely on transfer learning, we need an objective way of
 
 		%----------------------------------------------------------------------------------------
 
-		\subsubsection{Filling with generator}
-		\startToDo
-			Should we actually mention this, given that we only introduce the generator later, for transcription ?
-
-			Also, no tests for \FRCNN{} + Generator data, only \CTPN{}. So, should I include it here or later in CTPN section ?
-		\stopToDo
-
-		%----------------------------------------------------------------------------------------
-
 		\subsubsection{Results}
-		With the above techniques we generated 2000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{TEST} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges.
+		With the above techniques we generated 2000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{TEST} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
 
 		\begin{figure}
 			\begin{subfigure}{\linewidth}
 				\includegraphics{template_hist}
+				\caption[Template histograms]{
+					Examples of normalised histograms with the extreme counts removed (0 and 255). The templates filled with text (left) present more shades of gray than a real document (right).  Moreover, only half of real documents present such a structure, the other half being completely binarised, i.e. with a completely empty histogram (after removing the background/foreground extremes).
+				}
+				\label{fig:template_gray_hist}
 			\end{subfigure}
 			\begin{subfigure}{\linewidth}
 				\includegraphics[width=.49\linewidth]{binarisation_template}
 				\includegraphics[width=.49\linewidth]{binarisation_real}
+				\caption{Besides being gray, text from the RIMES database has soft edges, while text from real documents has a hard transition from foreground to background.}
+				\label{fig:template_gray_example}
 			\end{subfigure}
-			\caption[Template histograms]{
-				Top row shows normalised histograms of text-filled template and real document, with the extreme counts removed (0 and 255). The templates present more shades of gray (left) than a real document (right). Moreover, only half of real documents present such a structure, the other half being completely binarised.
-
-				The bottom row shows examples of text from the database and from a real document. Note the soft versus hard edges.
-			}
-			\label{fig:template_gray_hist}
+			\caption{Differences between \ds{Template} and \ds{TEST}}
+			\label{fig:template_gray}
 		\end{figure}
 
-		We generated another dataset, \ds{Template_bin}, of same size as \ds{Template}, where we binarised text before pasting it into the documents. Given the uniform illumination, a global thresholding technique worked well, with the threshold chosen by Otsu's method. The model trained on this dataset converged after 4\,500 steps and has a validation \(\AP \simeq 0.83 \). It also generalizes better than previous ones on the \ds{TEST} dataset, with an \(\AP \simeq 0.37\).
-
+		We generated another dataset, \ds{Template_bin}, of same size as \ds{Template}, where we binarised text before pasting it into the documents. Given the uniform illumination, a global thresholding technique worked well, with the threshold chosen by Otsu's method. The model trained on this dataset converged after 4500 steps and has a validation \(\AP \simeq 0.83 \). It also generalizes better than previous ones on the \ds{TEST} dataset, with an \(\AP \simeq 0.37\).
 
 	%----------------------------------------------------------------------------------------
 
-	\subsection{Results}\label{sec:frcnn_results}
 
-		\begin{figure}[h!]
-			\begin{subfigure}{.49\linewidth}
-				\includegraphics{frcnns_recall_scores}
-				\caption{}
-				\label{fig:frcnns_recall_scores}
-			\end{subfigure}
-			\begin{subfigure}{.49\linewidth}
-				\includegraphics{frcnns_prec_scores}
-				\caption{}
-				\label{fig:frcnns_prec_scores}
-			\end{subfigure}
-			\begin{subfigure}{.49\linewidth}
-				\includegraphics{frcnns_recall_iou}
-				\caption{}
-				\label{fig:frcnns_recall_iou}
-			\end{subfigure}
-			\begin{subfigure}{.49\linewidth}
-				\includegraphics{frcnns_prec_iou}
-				\caption{}
-				\label{fig:frcnns_prec_iou}
-			\end{subfigure}
-			\caption[\FRCNN{} results]{\todo{...}}
-			\label{fig:frcnn_results}
-		\end{figure}
+%========================================================================================
 
+\section{\FRCNN{} Results}\label{sec:frcnn_results}
 
+	\begin{figure}[ht]
+		\begin{subfigure}{.49\linewidth}
+			\includegraphics{frcnns_recall_scores}
+			\caption{}
+			\label{fig:frcnns_recall_scores}
+		\end{subfigure}
+		\begin{subfigure}{.49\linewidth}
+			\includegraphics{frcnns_prec_scores}
+			\caption{}
+			\label{fig:frcnns_prec_scores}
+		\end{subfigure}
+		\begin{subfigure}{.49\linewidth}
+			\includegraphics{frcnns_recall_iou}
+			\caption{}
+			\label{fig:frcnns_recall_iou}
+		\end{subfigure}
+		\begin{subfigure}{.49\linewidth}
+			\includegraphics{frcnns_prec_iou}
+			\caption{}
+			\label{fig:frcnns_prec_iou}
+		\end{subfigure}
+		\caption[\FRCNN{} results]{\todo{...}}
+		\label{fig:frcnn_results}
+	\end{figure}
+
+	\urldef{\cocoURL}\url{http://cocodataset.org/#detections-challenge2017}
+
+	We started our training with a model pre-trained for the COCO object detection challenge\footnote{Common Objects in Context \cocoURL}, which claimed an \(\AP \simeq 0.32\). Having reached a similar performance on our \ds{TEST} dataset, we want to evaluate in more detail the behaviour of the model and how it evolved over the three datasets, in order to assess whether further improvements are possible. \Citet{objdet_performance} give an overview of different metrics that can be useful for in-depth evaluation of object detection algorithms.
+
+	In a first phase, we use the confidence scores to rank the detections and we inspect the variation of recall while varying the score threshold (\autoref{fig:frcnns_recall_scores}). Recall at threshold \(\tau\) is defined as the ratio between the number of true positives and the number of \mbox{ground truth} boxes:
+	\[
+		R_{\tau} = \frac{\card{\operatorname{TP}_\tau}}{\card{\operatorname{GT}}}.
+	\]
+	As we are filtering by \emph{confidence} score, we set predicted boxes as true positives when they overlap a ground truth box, regardless of the \(\iou\). This makes it mandatory to also look at the distribution of precision values for the same variation of thresholds (\autoref{fig:frcnns_prec_scores}). Precision at threshold \(\tau\) is defined as the average \(\iou\) of all detected boxes:
+	\[
+			P_\tau = \frac{1}{\card{B^p_i}} \sum_{B^p_{i}} \iou(B^p_i, B^{gt}_i),~~~\operatorname{score}(B^p_i ) > \tau,
+	\]
+	where mapping to ground truth of a predicted box \(B^p_k\) happens greedily and in rank order:
+	\[
+			B^{gt}_k = \argmax_{B^{gt}_i} \iou(B^p_k, B^{gt}_i).
+	\]
+	As expected from the intermediate results, the model trained on \ds{Template_bin} achieves the highest recall, but with low confidence score. However, adding the information from the precision curve, we note that the boxes it gives are better overlapped with the ground truth.
+
+	If we posit that the confidence score bears less importance in our context, we may approach the problem from a different angle, keeping in mind that we want the detection to be as tight as possible around the text. To this end, we let \(\operatorname{score}(B^p_k) = \iou(B^p_k, B^{gt}_k)\), where the mapping is again done greedily, and we measure \(R_\tau\) and \(P_\tau\). In this case it is more evident that the model trained on \ds{Template_bin} is superior to the others since it maintains a higher recall rate while we filter the boxes to be of increasingly higher quality (\autoref{fig:frcnns_recall_iou}). Moreover, it has a higher overlap precision on average, its worst boxes being of similar quality to those from \ds{Collage}-trained model (\autoref{fig:frcnns_prec_iou}).
+
+	In conclusion, we observe that \FRCNN{} is able to learn handwriting specific features and can use them to detect handwritten text reasonably well. For our model the confidence score of the detected boxes is less helpful in filtering them, but this is a small problem since false negatives can be filtered at a later time. Alternatively, it is likely that training for more steps would aid the model to better distinguish between text and text-like examples.
 
 %========================================================================================
 
@@ -305,6 +321,14 @@ Given that our approaches rely on transfer learning, we need an objective way of
 	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
 %----------------------------------------------------------------------------------------
 
+		%----------------------------------------------------------------------------------------
+
+		\subsubsection{Filling with generator}
+		\startToDo
+			Should we actually mention this, given that we only introduce the generator later, for transcription ?
+
+			Also, no tests for \FRCNN{} + Generator data, only \CTPN{}. So, should I include it here or later in CTPN section ?
+		\stopToDo
 
 %========================================================================================
 

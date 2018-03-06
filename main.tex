@@ -18,6 +18,8 @@
 \usepackage{tabu}
 \usepackage{floatrow}       % automatically centers floats
 
+\linespread{1.25}           % adjust line spacing: 1.25 -> 1.5 lines
+
 \usepackage[a4paper,textwidth=159mm, hmargin ratio=1:1, vmargin ratio=1:1, verbose]{geometry}
 \makeatletter
 \AtEndPreamble{%
@@ -60,9 +62,11 @@
 
 \usepackage{amsmath, amssymb}
 \DeclareMathOperator*{\argmin}{argmin} % * means the argument in _{} is placed below rather than to the right
+\DeclareMathOperator{\argmax}{argmax} % * means the argument in _{} is placed below rather than to the right
 \DeclareMathOperator{\iou}{IoU}
 \DeclareMathOperator{\AP}{\operatorname{AP}_{\iou > 0.5}}
 \providecommand{\norm}[1]{\lVert#1\rVert} % unlike \newcommand, this does nothing if \norm already exists
+\providecommand{\card}[1]{\left\vert#1\right\vert}
 \newcommand*{\ve}[1]{\mathbf{#1}} % for displaying a vector
 \newcommand*{\ma}[1]{\mathrm{#1}} % for displaying a matrix
 \newcommand*{\cls}{\mathit{cls}} % for RPN loss
@@ -116,20 +120,25 @@
 % \algtext*{Indent}
 % \algtext*{EndIndent}
 
-% \usepackage{relsize}        % allows you to resize individual characters e.g. underscore
-% \renewcommand{\_}{\textscale{.5}{\textunderscore}}
 
-\newcommand*{\pkg}[1]{\textsf{\detokenize{#1}}} % typeset the name of a package: \pkg{tum_ardrone}
-\newcommand*{\ds}[1]{\textsl{\textsf{\detokenize{#1}}}} % and of a dataset \ds{RIMES}
-% these complicated definitions ensure that you always get correct spacing after the command
-% and that you cannot forget the correct form (e.g. \FRCNN{}) because this would give you
-% bad spacing.
-\makeatletter
-    \@ifdefinable{\FRCNN}{\def\FRCNN#{\mbox{\pkg{Faster R-CNN}}}}
-    \@ifdefinable{\CTPN}{\def\CTPN#{\mbox{\pkg{CTPN}}}}
-    \@ifdefinable{\RESNET}{\def\RESNET#{\mbox{\pkg{ResNet-101}}}}
-    \@ifdefinable{\CRNN}{\def\CRNN#{\mbox{\pkg{CRNN}}}}
-\makeatother
+%% Typeset names of packages ===================================================
+  % typeset the name of a package: \pkg{tum_ardrone}
+  % if this contains underscores, it will appear too big :(
+  % see https://tex.stackexchange.com/q/418649/76755 for how to mitigate this,
+  % but then the command cannot be used as an argument
+  \newcommand*{\pkg}[1]{\textsf{\detokenize{#1}}}
+  \newcommand*{\ds}[1]{\textsl{\textsl{\textsf{\detokenize{#1}}}}} % and of a dataset \ds{RIMES}
+
+  % these complicated definitions ensure that you always get correct spacing after the command
+  % and that you cannot forget the correct form (e.g. \FRCNN{}) because this would give you
+  % bad spacing.
+  \makeatletter
+      \@ifdefinable{\FRCNN}{\def\FRCNN#{\mbox{\pkg{Faster R-CNN}}}}
+      \@ifdefinable{\CTPN}{\def\CTPN#{\mbox{\pkg{CTPN}}}}
+      \@ifdefinable{\RESNET}{\def\RESNET#{\mbox{\pkg{ResNet-101}}}}
+      \@ifdefinable{\CRNN}{\def\CRNN#{\mbox{\pkg{CRNN}}}}
+  \makeatother
+%% =============================================================================
 
 
 \title{Handwriting recognition in business documents}
