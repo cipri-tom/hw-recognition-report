@@ -126,18 +126,30 @@
   % if this contains underscores, it will appear too big :(
   % see https://tex.stackexchange.com/q/418649/76755 for how to mitigate this,
   % but then the command cannot be used as an argument
-  \newcommand*{\pkg}[1]{\textsf{\detokenize{#1}}}
-  \newcommand*{\ds}[1]{\textsl{\textsl{\textsf{\detokenize{#1}}}}} % and of a dataset \ds{RIMES}
+  \usepackage{xparse}
+  \RenewDocumentCommand{\_}{}{\scalebox{0.5}[1]{\textunderscore}}
+  \ExplSyntaxOn
+  \NewDocumentCommand{\changeunderscore}{m}
+  {
+    \tl_set:Nn \l_tmpa_tl { #1 }
+    \regex_replace_all:nnN { _ } { \c{_} } \l_tmpa_tl
+    \tl_use:N \l_tmpa_tl
+  }
+  \ExplSyntaxOff
 
-  % these complicated definitions ensure that you always get correct spacing after the command
-  % and that you cannot forget the correct form (e.g. \FRCNN{}) because this would give you
-  % bad spacing.
+  \newcommand*{\pkg}[1]{\textsf{\changeunderscore{#1}}}
+  \newcommand*{\ds}[1]{\textsl{\textsf{\changeunderscore{#1}}}}
+
+  % syntactic sugar
   \makeatletter
-      \@ifdefinable{\FRCNN}{\def\FRCNN#{\mbox{\pkg{Faster R-CNN}}}}
-      \@ifdefinable{\CTPN}{\def\CTPN#{\mbox{\pkg{CTPN}}}}
-      \@ifdefinable{\RESNET}{\def\RESNET#{\mbox{\pkg{ResNet-101}}}}
-      \@ifdefinable{\CRNN}{\def\CRNN#{\mbox{\pkg{CRNN}}}}
+  \newcommand{\newcommandb}[2]{\@ifdefinable{#1}{\def#1##{#2}}}
   \makeatother
+
+  \newcommandb{\FRCNN}{\mbox{\pkg{Faster R-CNN}}}
+  \newcommandb{\CTPN}{\mbox{\pkg{CTPN}}}
+  \newcommandb{\RESNET}{\mbox{\pkg{ResNet-101}}}
+  \newcommandb{\CRNN}{\mbox{\pkg{CRNN}}}
+
 %% =============================================================================
 
 
