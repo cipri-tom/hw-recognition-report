@@ -291,13 +291,13 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\caption{}
 			\label{fig:frcnns_prec_iou}
 		\end{subfigure}
-		\caption[\FRCNN{} results]{\todo{...}}
+		\caption{\FRCNN{} results}
 		\label{fig:frcnn_results}
 	\end{figure}
 
 	\urldef{\cocoURL}\url{http://cocodataset.org/#detections-challenge2017}
 
-	We started our training with a model pre-trained for the COCO object detection challenge\footnote{Common Objects in Context \cocoURL}, which claimed an \(\AP \simeq 0.32\). Having reached a similar performance on our \ds{TEST} dataset, we want to evaluate in more detail the behaviour of the model and how it evolved over the three datasets, in order to assess whether further improvements are possible. \Citet{objdet_performance} give an overview of different metrics that can be useful for in-depth evaluation of object detection algorithms.
+	We started our training with a model pre-trained for the COCO object detection challenge\footnote{Common Objects in Context \cocoURL}, which claimed an \(\AP \simeq 0.32\). Having reached a similar performance on our \ds{TEST} dataset, we want to evaluate in more detail the behaviour of the model and how it evolved over the three datasets, in order to assess whether further improvements are possible. \Citet{objdet_performance} give an overview of different metrics that can be useful for in-depth evaluation of object detection algorithms. We are interested in evaluating both the detection \emph{quantity}, as well as its \emph{quality}. However, these two measures are related, since the detection quantity depends on our quality requirements.
 
 	In a first phase, we use the confidence scores to rank the detections and we inspect the variation of recall while varying the score threshold (\autoref{fig:frcnns_recall_scores}). Recall at threshold \(\tau\) is defined as the ratio between the number of true positives and the number of \mbox{ground truth} boxes:
 	\[
@@ -315,7 +315,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	If we posit that the confidence score bears less importance in our context, we may approach the problem from a different angle, keeping in mind that we want the detection to be as tight as possible around the text. To this end, we let \(\operatorname{score}(B^p_k) = \iou(B^p_k, B^{gt}_k)\), where the mapping is again done greedily, and we measure \(R_\tau\) and \(P_\tau\). In this case it is more evident that the model trained on \ds{Template_bin} is superior to the others since it maintains a higher recall rate while we filter the boxes to be of increasingly higher quality (\autoref{fig:frcnns_recall_iou}). Moreover, it has a higher overlap precision on average, its worst boxes being of similar quality to those from \ds{Collage}-trained model (\autoref{fig:frcnns_prec_iou}).
 
-	In conclusion, we observe that \FRCNN{} is able to learn handwriting specific features and it can use them to detect handwritten text reasonably well. For our model the confidence score of the detected boxes is less helpful for selecting high quality ones, but this is a small problem since false negatives can be filtered at a later time. Alternatively, it is likely that fine tuning on a subset of \ds{TEST} would aid the model to better distinguish between real text and text-like examples. We also note from results like \autoref{fig:template_bin_detection} that the model learnt to detect bounding boxes taller than the actual text due to inaccurate training examples.
+	In conclusion, we proved that \FRCNN{} is able to learn handwriting specific features and it can use them to detect handwritten text reasonably well. For our model the confidence score of the detected boxes is less helpful for selecting high quality ones, but this is a small problem since false negatives can be filtered at a later time. Alternatively, it is likely that fine tuning on a subset of \ds{TEST} would aid the model to better distinguish between real text and text-like examples. We also note from results like \autoref{fig:template_bin_detection} that the model learnt to detect bounding boxes taller than the actual text due to inaccurate training examples.
 
 %========================================================================================
 
@@ -323,7 +323,36 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 \section{Connectionist Text Proposal Network}\label{sec:ctpn}
 	% http://i.cs.hku.hk/~kykwong/publications/wliu_bmvc16.pdf This has a good simple explanation of ResNet and LSTM and what-not
 
-	\todo{After we }
+	After establishing the feasability of text detection, we started working on the transcription step. However, in parallel we continued searching for improvements, as the above results are not robust enough for reliable transcription. The rest of the section presents an extension to the \FRCNN{} architecture based on the work of \citet{CRNN} as well as a more accurate dataset that was used to train it.
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{RPN becomes CTPN}
+		The main novelty of \FRCNN{} consisted of a fast and accurate additional network that proposes object candidates based on a set of anchors which are combined in different scales and aspect ratios. This work builds on the observation that text is composed of a sequence of letters and, as such, a text ``object'' can have arbitrary width. This is difficult to accomodate with the standard anchor mechanism, as it would need many different aspect ratios. Even so, it would still not be able to completely detect a line that is much longer than any of the ones in the training set.
+
+		The authors propose a clever solution: break down text objects into a series of adjacent boxes of constant-width and similar height; consequently, learn to predict a series of anchors that respect the same constraints (\autoref{fig:ctpn_splitting}), called \emph{fine-scale} proposals. Therefore, the architecture now only has to learn text-specific features of a reduced bounding box. In addition, the box regression is only concerned with the anchor's height, since the width is fixed.
+
+		While the above is a clever twist on the original RPN, the merging of fine-scale proposals requires high-confidence outputs for all candidates in a series, i.e. for all boxes on the same line; otherwise it easily results in a segmented prediction. This is problematic especially when we want to multiple words as a single sequence on a line (\autoref{fig:ctpn_merging}). To solve this problem the \CTPN{} architecture also brings a novel extension in the form of a bi-directional LSTM that sits of top of the sliding window network. This exploits the \emph{sequence} part of the character string and propagates the context between multiple predictions. In this way, the network provides more consistency both for the confidence and for the heights of the boxes.
+
+		A final refinement the original paper mentions consists of a regression of side margins of the first and last anchors on a detected line. Since we achieved good results without this part, we postponed its implementation for future improvements.
+
+		\begin{figure}
+			\begin{subfigure}[b]{\linewidth}
+				\includegraphics[width=.45\linewidth, valign=c]{ctpn_orig}
+				\(\Longrightarrow\)
+				\includegraphics[width=.49\linewidth, valign=c]{ctpn_split}
+				\caption{\CTPN{} splitting -- Original bounding box and the corresponding series of equal width boxes.}\label{fig:ctpn_splitting}
+			\end{subfigure}
+			\par\bigskip
+			\begin{subfigure}[b]{\linewidth}
+				\includegraphics[width=.49\linewidth, valign=c]{ctpn_recon_fine}
+				\(\Longrightarrow\)
+				\includegraphics[width=.49\linewidth, valign=c]{ctpn_recon_merged}
+				\caption{\CTPN{} prediction -- Left: predicted fine-scale proposals. Right: Resulting bounding boxes. Note the limited merging due to missing proposals.}\label{fig:ctpn_merging}
+			\end{subfigure}
+			\caption{\CTPN{} splitting and merging}
+		\end{figure}
+
 	%----------------------------------------------------------------------------------------
 
 
