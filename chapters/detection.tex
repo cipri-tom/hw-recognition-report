@@ -330,11 +330,11 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\subsection{RPN becomes CTPN}
 		The main novelty of \FRCNN{} consisted of a fast and accurate additional network that proposes object candidates based on a set of anchors which are combined in different scales and aspect ratios. This work builds on the observation that text is composed of a sequence of letters and, as such, a text ``object'' can have arbitrary width. This is difficult to accomodate with the standard anchor mechanism, as it would need many different aspect ratios. Even so, it would still not be able to completely detect a line that is much longer than any of the ones in the training set.
 
-		The authors propose a clever solution: break down text objects into a series of adjacent boxes of constant-width and similar height; consequently, learn to predict a series of anchors that respect the same constraints (\autoref{fig:ctpn_splitting}), called \emph{fine-scale} proposals. Therefore, the architecture now only has to learn text-specific features of a reduced bounding box. In addition, the box regression is only concerned with the anchor's height, since the width is fixed.
+		The authors propose a clever solution: break down text objects into a series of adjacent boxes of constant-width and similar height; consequently, learn to predict a series of anchors that respect the same constraints, called \emph{fine-scale} proposals (\autoref{fig:ctpn_splitting}). Therefore, the architecture now only has to learn text-specific features of a reduced bounding box. In addition, the box regression is only concerned with the anchor's height, since the width is fixed.
 
-		While the above is a clever twist on the original RPN, the merging of fine-scale proposals requires high-confidence outputs for all candidates in a series, i.e. for all boxes on the same line; otherwise it easily results in a segmented prediction. This is problematic especially when we want to multiple words as a single sequence on a line (\autoref{fig:ctpn_merging}). To solve this problem the \CTPN{} architecture also brings a novel extension in the form of a bi-directional LSTM that sits of top of the sliding window network. This exploits the \emph{sequence} part of the character string and propagates the context between multiple predictions. In this way, the network provides more consistency both for the confidence and for the heights of the boxes.
+		While the above is a clever twist on the original RPN, the merging of fine-scale proposals requires high-confidence outputs for all candidates in a series, i.e. for all boxes on the same line; otherwise it easily results in a segmented prediction. This is problematic especially when we want to detect multiple words as a single sequence on a line (\autoref{fig:ctpn_merging}). To solve this problem the \CTPN{} architecture also brings a novel extension in the form of a bi-directional LSTM that sits of top of the sliding window network. This exploits the \emph{sequence} part of the character string and propagates the context between multiple predictions. In this way, the network provides more consistency both for the confidence and for the heights of the boxes.
 
-		A final refinement the original paper mentions consists of a regression of side margins of the first and last anchors on a detected line. Since we achieved good results without this part, we postponed its implementation for future improvements.
+		A final refinement mentioned in the original paper consists of a regression of side margins of the first and last anchors on a detected line. Since we achieved good results without this part, we postponed its implementation for future improvements.
 
 		\begin{figure}
 			\begin{subfigure}[b]{\linewidth}
@@ -354,6 +354,30 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\end{figure}
 
 	%----------------------------------------------------------------------------------------
+
+	\subsection{Accurate training data}
+		As we noted in the results of the \FRCNN{}, the model learnt to predict rather tall bounding boxes which are not representative for real documents. One reason for this is that we used the original height of text lines in order to avoid artefacts of interpolation in resizing. Additionally, the model picked up peculiarities of the training set, such as incorrectly segmented lines.
+
+		To overcome the above limitations, we used our text generator from \autoref{sec:word_generator} to fill templates as before. This ensures the bounding boxes are always tight around the text and a correct baseline is used for alignment. Moreover, the height of the text is within the boundaries of the placeholder while keeping the binary distribution of pixels (i.e. avoiding interpolation). The sole possible disadvantage of this method is that we did not enforce a consistent style for all text pieces in a given section. Nevertheless, this should bear a minimal influence on the detection since the algorithm is translation invariant and it scans the image left to right, top to bottom, not following the section order.
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Results}
+		\begin{figure}[ht]
+			\begin{subfigure}{.49\linewidth}
+				\includegraphics{ctpn_vs_frcnn_recall}
+				\caption{}
+				\label{fig:ctpn_vs_frcnn_recall}
+			\end{subfigure}
+			\begin{subfigure}{.49\linewidth}
+				\includegraphics{ctpn_vs_frcnn_prec}
+				\caption{}
+				\label{fig:ctpn_vs_frcnn_prec}
+			\end{subfigure}
+			\caption{\CTPN{} results}
+			\label{fig:ctpn_results}
+		\end{figure}
+
 
 
 	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
