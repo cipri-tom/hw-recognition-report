@@ -80,7 +80,7 @@ This has some examples of `exceptional' images for OCR systems. These kind of di
 
 	%----------------------------------------------------------------------------------------
 
-	\subsection{Transcription}
+	\subsection{Transcription}\label{sec:related_transcription}
 		Early works for text recognition focused on simply classifying individual characters. \Citet{leCun_MNIST} presented a robust system for handwritten digit classification using Convolutional Neural Networks (CNNs). Their effectiveness has been proven over and over again, especially with the work of \citet{ciresan} who were the first to achieve near human performance on this task, while also improving the state of the art of the time on many image classification tasks.
 
 		In order to deal with cursive writing, where character segmentation is more difficult, other works expanded the digit classification approach to words. For example, \citet{sharma2015adapting} adapt a pre-trained CNN to distinguish among classes of word images. This method requires fixed size input image and cannot deal with out-of-vocabulary words. \Citet{jaderberg2014_unconstrained} use an ensemble of character and n-gram CNNs to perform unconstrained recognition, but it only supports \emph{printed} words of length up to 23. \Citet{sudholt2016phocnet} provide a similar architecture which improves on these weaknesses by using Pyramidal Histogram of Characters (PHOC) as labels for the task of \emph{word spotting}.
