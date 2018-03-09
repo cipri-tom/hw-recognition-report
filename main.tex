@@ -104,6 +104,13 @@
   % make the caption a bit shorter than the rest of the text, with bold font for label
   \captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 
+  % \makeatletter
+  % \let\x@caption\caption % original \caption
+  % \def\x@@caption[#1]#2{\x@caption[{#1}]{#1 --- #2}} % with optional arg
+  % \def\x@@@caption#1{\x@caption[{#1}]{#1}} % without optional arg
+  % \def\caption{\@ifnextchar[\x@@caption\x@@@caption} % new \caption
+  % \makeatother
+
   % try to include the short caption title in the long one
   % it doesn't work https://tex.stackexchange.com/questions/127921/
   % \usepackage{xpatch}
