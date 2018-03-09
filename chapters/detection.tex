@@ -157,63 +157,64 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 		We minimised the loss function using the Adam optimiser \citep{adam}, with an initial learning rate \(\lambda = 0.0001\). Furthermore, we used \(L_2\) regularizer with balancing weight \(\lambda_{L2} = 0.0005\).
 
-
-
-%========================================================================================
-
-\section{Evaluation framework}\label{sec:detection_eval}
-	The lack of a \emph{cost} or risk associated with a false positive detection makes the assessment of an algorithm a very difficult task as it requires a trade-off between different types of errors. Standard object detection challenges such as PASCAL VOC \citep{pascal_voc} required participants to rank their results by a score, commonly referred to as \emph{confidence}. This allows the evaluation of a trade-off between false positives and false negatives by assessing the area under the precision/recall curve. To this end, the Average Precision is used:\[
-		\operatorname{AP} = \frac{1}{11} \sum_{r \in [0,1]} p(r),
-	\] which is the mean of precisions \(p\) computed at eleven equally spaced recall values \(r \in [0,1]\).
-
-	Two essential observations need to be made. First, a great importance is given to the confidence score, since recall and precision are defined by only considering examples ranked above a given rank. Second, the measure does \emph{not} define what a positive result means. For object detection, a predicted bounding box \(B^p\) is positively mapped to \mbox{ground truth} box \(B^{gt}\) when their overlap exceeds a given threshold \(\tau\). The overlap is defined as \[
-		\iou(B^p, B^{gt}) = \frac{\mathit{area}(B^p \cap B^{gt})}{\mathit{area}(B^p \cup B^{gt})}.
-	\] In general, the threshold is set at \(\tau = 0.5\) and the measure is denoted by \(\AP\).
-
-	\todo{Problem: I'm using IoU in hyperparams of FRCNN, which comes before this section.}
-
-	Since text detection is a particular case of object detection, it generally subscribes to the same evaluation criteria. However, text is more than a simple object with binary presence; it consists of a sequence of characters, all of which are mandatory and of \emph{equal} importance to the meaning. This is in contrast to objects in general images such as those in the PASCAL VOC database. While these also present a hierarchical structure (e.g.\ a cat has eyes, ears, legs, tail etc.), the presence of their sub-elements is not always mandatory; on the contrary, a subset of composing elements is almost always hidden due to self occlusions. This allows some partial detections to be considered valid in the context of objects (see \autoref{fig:cindy}). Text detection cannot afford such flexibility, since we aim to use the detections in a subsequent step of transcription. This requires that bounding boxes include all relevant text and, ideally, no other text fragments such as parts of the line above or below (see \autoref{fig:text_overlap_example}).
-
-	Considering that in our documents text lines are close to each other, we demand the detections to be as tight as possible around the text. In addition, having a high recall is more important than predicting with a high confidence, since the transcription phase can easily ignore false positives. For this reason, the comparison in \autoref{sec:frcnn_results} will consider these two criteria for comparing different experiments. However, given the lack of a detection baseline in such challenging documents, we based our intermediate decisions on the standard measure of \(\AP\) which allowed us to compare with the performance of the same algorithm on a different task.
-
-	\subsubsection*{Test data}\label{sec:detection_test_data}
-
-	Given that our approaches rely on transfer learning, we need an objective way of comparing their performance. To this end, we constructed a \ds{TEST} dataset to provide ground truth labels on real-world data. This consists of 26 annotated statements which amount to approximately 1400 bounding boxes.
-
-	\begin{figure}
-		\begin{subfigure}[b]{0.49\linewidth}
-			\includegraphics{cindy}
-			\caption{\label{fig:cindy}}
-		\end{subfigure}
-		\begin{subfigure}[b]{0.49\linewidth}
-			\includegraphics{text_iou}
-			\vspace{2em} % no idea why this works. it was supposed to add space *between* the images, but oh well...
-			\includegraphics{text2_iou}
-			\caption{\label{fig:text_overlap_example}}
-		\end{subfigure}
-		\caption[Overlap examples]{Overlap examples: red shows ground truth; green shows detection. In all cases \(\iou = 0.55\). While this is a valid detection threshold for a normal object, it is unsatisfactory for text recognition.
-		}
-		\label{fig:overlap_example}
-	\end{figure}
-
-
 %========================================================================================
 
 
-\section{Generating data for training experiments}\label{sec:detection_experiments}
-	Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality. The rest of the section shows how we transition from the clean and neat handwriting database to a format that helps the algorithm generalise to our use case.
+\section{Datasets and experiments}\label{sec:detection_experiments}
+	%-- INTRO -------------------------------------------------------------------------------
+		Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed to train our architectures. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality.
+
+		The RIMES database \citep{rimes} is the result of a huge data collection effort by the French ministries of defense and research, which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)). We will base most of our experiments on this collection of handwritten text, though the following sections will detail different ways of adapting it to our use case. Additionally, we will also use our handwriting generator from \autoref{sec:generator} to \todo{analyse the influence of the training set and to overcome limitations of the RIMES database}.
 
 	%----------------------------------------------------------------------------------------
 
-	\subsection{The RIMES database}\label{sec:rimes}
-		The RIMES database \citep{rimes} is the result of a huge data collection effort by the French ministries of defense and research, which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)).
+	\subsection{Evaluation framework}\label{sec:detection_eval}
+		Before delving deeper into the details of our experiments, it is necessary to introduce requirements of the task and measures for quantifying their achievement. This section introduces one such measure that we will use for quickly assessing the outcome of an experiment. An in-depth evaluation will be carried on in \autoref{sec:detection_results}.
+
+		Judging a detection result via a single number is a very difficult task, since the lack of a \emph{cost} associated with a false positive requires a trade-off between different types of errors. Standard object detection challenges such as PASCAL VOC \citep{pascal_voc} required participants to rank their results by a score, commonly referred to as \emph{confidence}. This allows the evaluation of a trade-off between false positives and false negatives by assessing the area under the precision/recall curve. To this end, the Average Precision is used:\[
+			\operatorname{AP} = \frac{1}{11} \sum_{r \in [0,1]} p(r),
+		\] which is the mean of precisions \(p\) computed at eleven equally spaced recall values \(r \in [0,1]\).
+
+		Two essential observations need to be made. First, a great importance is given to the confidence score, since recall and precision are defined by only considering examples ranked above a given rank. Second, the measure does \emph{not} define what a positive result means. For object detection, a predicted bounding box \(B^p\) is positively mapped to \mbox{ground truth} box \(B^{gt}\) when their overlap exceeds a given threshold \(\tau\). The overlap is defined as \[
+			\iou(B^p, B^{gt}) = \frac{\mathit{area}(B^p \cap B^{gt})}{\mathit{area}(B^p \cup B^{gt})}.
+		\] In general, the threshold is set at \(\tau = 0.5\) and the measure is denoted by \(\AP\).
+
+		Since text detection is a particular case of object detection, it generally subscribes to the same evaluation criteria. However, text is more than a simple object with binary presence; it consists of a sequence of characters, all of which are mandatory and of \emph{equal} importance to the meaning. This is in contrast to objects in general images such as those in the PASCAL VOC database. While such objects also admit a hierarchical structure (e.g.\ a cat has eyes, ears, legs, tail etc.), the presence of their sub-elements is not always mandatory; on the contrary, a subset of composing elements is almost always hidden due to self occlusions. This allows some partial detections to be considered valid in the context of objects (see \autoref{fig:cindy}). Text detection cannot afford such flexibility, since we aim to use the detections in a subsequent step of transcription. This requires that bounding boxes include all relevant text and, ideally, no other text fragments such as parts of the line above or below (see \autoref{fig:text_overlap_example}).
+
+		Considering that in our documents text lines are close to each other, we demand the detections to be as tight as possible around the text. However, given the lack of a baseline in such challenging documents, we will base our intermediate decisions on the standard measure of \(\AP\). This allows us to compare our text detection models with their object detection counterparts.
+
+		\subsubsection*{Test data}\label{sec:detection_test_data}
+
+		Given that our approaches rely on transferring knowledge from generated data, we need an objective way of comparing their performance. To this end, we constructed a \ds{TEST} dataset to provide ground truth labels on real-world data. This consists of 26 annotated statements which amount to approximately 1400 bounding boxes.
+
+		\begin{figure}
+			\begin{subfigure}[b]{0.49\linewidth}
+				\includegraphics{cindy}
+				\caption{\label{fig:cindy}}
+			\end{subfigure}
+			\begin{subfigure}[b]{0.49\linewidth}
+				\includegraphics{text_iou}
+				\vspace{2em} % no idea why this works. it was supposed to add space *between* the images, but oh well...
+				\includegraphics{text2_iou}
+				\caption{\label{fig:text_overlap_example}}
+			\end{subfigure}
+			\caption[Overlap examples]{Overlap examples: red shows ground truth; green shows detection. In all cases \(\iou = 0.55\). While this is a valid detection threshold for a normal object, it is unsatisfactory for text recognition.
+			}
+			\label{fig:overlap_example}
+		\end{figure}
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Collage of paragraphs}
-		For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders, similarly to the sections in a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation. In our comparisons, we will refer to this dataset as \ds{Collage}.
+		\subsubsection*{\ds{Collage} dataset}
 
-		A model trained on this dataset converged rather quickly, in \(\approx 8000\) iterations. On its validation data, the model achieves a remarkably high performance, with \mbox{\(\AP = 0.96\)}. Note that the best performance of any model in object detection so far is \(\AP \simeq 0.73\), which clearly indicates that the task is very easy for the chosen model. However, the performance does not extend to the \ds{TEST} dataset, achieving only \(\AP = 0.02\). This highlights the differences between the training and the test dataset. The most likely cause of the performance drop is the presence of additional elements in a real document, such as printed text and indicator lines, which do not exist in the training images. Therefore, the negative anchors generated by the algorithm are inevitably white boxes. In addition, the model regresses the default anchor sizes to predict boxes of shape similar to the input lines. These present little variation in width and are, in general, much wider than the text fields of a document.
+			For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders, similarly to the sections in a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation.
+
+		%----------------------------------------------------------------------------------------
+
+		\subsubsection*{Outcome}
+
+			A \FRCNN{} model trained on this dataset converged rather quickly, in \(\approx 8000\) iterations. On its validation data, the model achieves a remarkably high performance, with \mbox{\(\AP = 0.96\)}. Note that the best performance of any model in object detection so far is \(\AP \simeq 0.73\), which clearly indicates that the task is very easy for the chosen model. However, the performance does not extend to the \ds{TEST} dataset, achieving only \(\AP = 0.02\). This highlights the differences between the training and the test datasets. The most likely cause of the performance drop is the presence of additional elements in a real document, such as printed text and indicator lines, which do not exist in the training images. Therefore, the negative anchors generated by the algorithm are inevitably white boxes. In addition, the model regresses the anchor sizes to predict boxes of shape similar to the input lines. These display little variation in width and are, in general, much wider than the text fields of a document.
 
 		\begin{figure}
 			\begin{subfigure}[c]{\textwidth}
@@ -238,24 +239,27 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	%----------------------------------------------------------------------------------------
 
-	\subsection{Filled templates}
-		%----------------------------------------------------------------------------------------
+	\subsection{RIMES-filled templates}
+		%........................................................................................
 		% subsubsection: general description
 
 			To address the limitations of the \ds{Collage} dataset and allow the model to learn more complex patterns, we propose to generate images which resemble more the real documents. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
 
+		%........................................................................................
+
+		\subsubsection*{\ds{Template} and \ds{Template_bin} datasets}
 			A template is formed by adding input placeholders to an empty document (\autoref{fig:template}). These correspond to the standard places that the users need to fill as well as non-standard places where users regularly add information. To increase the variation of the data, only a subset of the placeholders are filled on each template instance and the input text is shifted horizontally inside the placeholder by a random amount. We investigate two possible text sources for filling the templates.
 
-			The first one consists of images of \emph{individual} words from the RIMES database. This has the advantage of tight bounding boxes around the text, which we established as an important criterion in \autoref{sec:detection_eval}. Also, it allows us to keep the ground truth text associated with each box, which will also make them useful for the transcription step. On the other hand, this source also poses some problems. First, words are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that the lines formed this way do not follow any sentence structure. Furthermore, words with ascenders and descenders would need to be aligned to their baseline, which is especially difficult to estimate for short words. Finally, handwriting styles from multiple authors would be combined on the same line and in the same document section.
+			The first one consists of images of \emph{individual} words from the RIMES database. This has the advantage of tight bounding boxes around the text, which we established as an important criterion in \autoref{sec:detection_eval}. Also, it allows us to keep the ground truth text associated with each box, which will also make them useful for the transcription step. On the other hand, this source also poses some problems. First, words are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that lines formed in this way do not follow any sentence structure. Furthermore, words with ascenders and descenders would need to be aligned to their baseline, which is especially difficult to estimate for short words. Finally, handwriting styles from multiple authors would be combined on the same line and in the same document section.
 
-			The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines usually do not fit inside the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
+			The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines are usually longer than the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\):\footnote{\todo{use some ``algorithm'' package here; although these are quite fixed}} % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
 			\noindent\begin{minipage}{\linewidth}
 			\begin{enumerate}
 				\item use the line transcription labels to find the number of words \(n\)
 				\item project the image columns horizontally, accumulating their sum into \[
-					\ve{p}[c] = \sum_r \ma{I}[r,c]
+					\ve{p}_c = \sum_{r = 1..H }\ma{I}_{r,c}
 				\]
-				\item find the continuous runs of zero \(\ve{z} = \{ (i, j) \mid \ve{p}[k] = 0, \forall k \in [i, j] \}\); these correspond to gaps between letters (marked in red in \autoref{fig:baseline_ok})
+				\item find the continuous runs of zero \(\ve{z} = \{ (i, j) \mid \ve{p}_k = 0, \forall k \in [i, j] \}\); these correspond to gaps between letters (marked in red in \autoref{fig:baseline_ok})
 				\item take \(n\) widest gaps \(\ve{z}'\) from \(\ve{z}\), where the gap width \(w := j - i\)
 				\item split at columns \(c_k = \frac{j_k - i_k}{2}, \forall (i_k, j_k) \in \ve{z}'\).
 			\end{enumerate}
@@ -270,23 +274,23 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 				\label{fig:template}
 			\end{figure}
 
-		%----------------------------------------------------------------------------------------
+		%........................................................................................
 
-		\subsubsection{Baseline detection}
-			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple algorithm to find the baseline row \(r_b\) of a text image \(\ma{I}\) of size \(H \times W\) (\autoref{fig:baseline}) :
+		\subsubsection*{Baseline detection}
+			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple algorithm to find the baseline row \(r_b\) of a text image \(\ma{I}\) of size \(H \times W\) (\autoref{fig:baseline}):
 			\noindent\begin{minipage}{\linewidth}
 			\begin{enumerate}
 				\item project the rows of the image by averaging the pixel values: \[
-					\ve{p}[r] = \frac{1}{W} \sum_c I[r,c]
+					\ve{p}_r = \frac{1}{W} \sum_c I_{r,c}
 				\]
 				\item let \(m = \operatorname{median}(\ve{p})\)
-				\item the baseline is the first row \(r_b\) where \(\ve{p}[r_b] > m\), \(b = \overline{H, 1}\).
+				\item the baseline is the first row \(r_b\) where \(\ve{p}_{r_b} > m\), \(b = H..1\).
 			\end{enumerate}
 			\end{minipage}\\
 
 			This algorithm works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another text line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
 
-			\begin{figure}[t]
+			\begin{figure}[ht]
 				\begin{subfigure}{\linewidth}
 					\includegraphics{baseline_ok}
 					\caption{Good and clean horizontal image}
@@ -308,43 +312,61 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 				\label{fig:baseline}
 			\end{figure}
 
-		%----------------------------------------------------------------------------------------
+		%........................................................................................
 
-		\subsubsection{Results}
-		With the above techniques we generated 2000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{TEST} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
+		\subsubsection*{Outcome}
+			With the above techniques we generated 2000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{TEST} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
 
-		\begin{figure}
-			\begin{subfigure}{\linewidth}
-				\includegraphics{template_hist}
-				\caption[Template histograms]{
-					Examples of normalised histograms with the extreme counts removed (0 and 255). The templates filled with text (left) present more shades of gray than a real document (right).  Moreover, only half of real documents present such a structure, the other half being completely binarised, i.e. with a completely empty histogram (after removing the background/foreground extremes).
-				}
-				\label{fig:template_gray_hist}
-			\end{subfigure}
-			\begin{subfigure}{\linewidth}
-				\includegraphics[width=.49\linewidth]{binarisation_template}
-				\includegraphics[width=.49\linewidth]{binarisation_real}
-				\caption{In addition to being gray, text from the RIMES database has soft edges, while text from real documents has a hard transition from foreground to background.}
-				\label{fig:template_gray_example}
-			\end{subfigure}
-			\caption{Differences between \ds{Template} and \ds{TEST}}
-			\label{fig:template_gray}
-		\end{figure}
+			\begin{figure}
+				\begin{subfigure}{\linewidth}
+					\includegraphics{template_hist}
+					\caption[Template histograms]{
+						Examples of normalised histograms with the extreme counts removed (0 and 255). The templates filled with text (left) present more shades of gray than a real document (right).  Moreover, only half of real documents present such a structure, the other half being completely binarised, i.e. with a completely empty histogram (after removing the background/foreground extremes).
+					}
+					\label{fig:template_gray_hist}
+				\end{subfigure}
+				\begin{subfigure}{\linewidth}
+					\includegraphics[width=.49\linewidth]{binarisation_template}
+					\includegraphics[width=.49\linewidth]{binarisation_real}
+					\caption{In addition to being gray, text from the RIMES database has soft edges, while text from real documents has a hard transition from foreground to background.}
+					\label{fig:template_gray_example}
+				\end{subfigure}
+				\caption{Differences between \ds{Template} and \ds{TEST}}
+				\label{fig:template_gray}
+			\end{figure}
 
-		We generated another dataset, \ds{Template_bin}, of same size as \ds{Template}, where we binarised text before pasting it into the documents (\autoref{fig:template_bin_detection}). Given the uniform illumination, a global thresholding technique worked well, with the threshold chosen by Otsu's method. The model trained on this dataset converged after 4500 steps and has a validation \(\AP \simeq 0.83 \). It also generalizes better than previous ones on the \ds{TEST} dataset, with an \(\AP \simeq 0.37\).
+			We generated another dataset, \ds{Template_bin}, of same size as \ds{Template}, where we binarised text before pasting it into the documents (\autoref{fig:template_bin_detection}). Given the uniform illumination, a global thresholding technique worked well, with the threshold chosen by Otsu's method. The model trained on this dataset converged after 4500 steps and has a validation \(\AP \simeq 0.83 \). It also generalizes better than previous ones on the \ds{TEST} dataset, with an \(\AP \simeq 0.37\).
 
-		\begin{figure}
-			\includegraphics{template_bin_detection}
-			\caption[\ds{Template_bin} example]{Example of template filled with binarised text from the RIMES database. Black shows ground truth boxes, and green the detection result. This particular example also presents some bad ground truth examples, marked by red numbers. Some of them are not detected (1, 2) while some are detected with high precision (3, 4). }
-			\label{fig:template_bin_detection}
-		\end{figure}
+			\begin{figure}
+				\includegraphics{template_bin_detection}
+				\caption[\ds{Template_bin} example]{Example of template filled with binarised text from the RIMES database. Black shows ground truth boxes, and green the detection result. This particular example also presents some bad ground truth examples, marked by red numbers. Some of them are not detected (1, 2) while some are detected with high precision (3, 4). }
+				\label{fig:template_bin_detection}
+			\end{figure}
 
 	%----------------------------------------------------------------------------------------
+	\subsection{Generator-filled templates}
+		As will be apparent from the results of the \FRCNN{} architecture (\autoref{sec:frcnn_results}), the model learnt to predict rather tall bounding boxes which are not representative for real documents. One reason for this is that we used the original height of text lines in order to avoid artefacts of interpolation in resizing. Additionally, the model picked up peculiarities of the training set, such as incorrectly segmented lines.
+
+		%........................................................................................
+
+		\subsubsection*{\ds{Template_gen} dataset}
+
+			To overcome the above limitations, we used our text generator from \autoref{sec:word_generator} to fill templates as before. It produces coherent and realistic-looking text of given dimensions. This ensures the bounding boxes are always tight and a correct baseline is used for alignment inside the placeholder. Moreover, the height of the text is within the boundaries of the placeholder while keeping the binary distribution of pixels (i.e. avoiding interpolation). The sole possible disadvantage of this method is that we did not enforce a consistent style for all text pieces in a given section. Nevertheless, we realised this should bear a minimal influence on the detection since the algorithm is translation invariant and it scans the image left to right, top to bottom, not following the section order.
+
+		%........................................................................................
+		\subsubsection*{Outcome}
+
+			\todo{GOTTA DO IT !}
+
+%========================================================================================
+
+%========================================================================================
 
 
 %========================================================================================
 
 \section{Faster R-CNN Results}\label{sec:frcnn_results}
+	\todo{ In addition, having a high recall is more important than predicting with a high confidence, since the transcription phase can easily ignore false positives. For this reason, the comparison in \autoref{sec:frcnn_results} will consider these two criteria for comparing different experiments. }
 
 	\begin{figure}[ht]
 		\begin{subfigure}{.49\linewidth}
@@ -398,11 +420,6 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 
 	%----------------------------------------------------------------------------------------
-
-	\subsection{Accurate training data}
-		As we noted in the results of the \FRCNN{}, the model learnt to predict rather tall bounding boxes which are not representative for real documents. One reason for this is that we used the original height of text lines in order to avoid artefacts of interpolation in resizing. Additionally, the model picked up peculiarities of the training set, such as incorrectly segmented lines.
-
-		To overcome the above limitations, we used our text generator from \autoref{sec:word_generator} to fill templates as before. This ensures the bounding boxes are always tight around the text and a correct baseline is used for alignment. Moreover, the height of the text is within the boundaries of the placeholder while keeping the binary distribution of pixels (i.e. avoiding interpolation). The sole possible disadvantage of this method is that we did not enforce a consistent style for all text pieces in a given section. Nevertheless, this should bear a minimal influence on the detection since the algorithm is translation invariant and it scans the image left to right, top to bottom, not following the section order.
 
 	%----------------------------------------------------------------------------------------
 
