@@ -5,7 +5,7 @@
 
 The challenges presented in \autoref{sec:challenges} make it clear that a classical approach is unsuitable for our problem. As such, we direct our attention towards the modern, robust architectures of Convolutional Neural Networks (CNN) \citep{leCun_CNN}. In particular, we take inspiration from the great advances in object detection and we will treat text like a regular object which can be found anywhere in the image.
 
-\Autoref{sec:faster_rcnn} introduces the first architecture we tested, the \FRCNN{} \citep{faster_rcnn}, as a mean of establishing a baseline. Then we present several evaluation techniques in \autoref{sec:detection_eval} and the requirements of a good detection system. We use these to drive several experiments, which are presented in \autoref{sec:detection_experiments} together with their data; intermediate results will drive us to more advanced data generation techniques. Then, \autoref{sec:ctpn} presents a more powerful architecure for text detection, the \emph{Connectionist Text Proposal Network}(\CTPN{}, \citet{ctpn}). Finally, we conclude the chapter with an overview of the results in \autoref{sec:detection_results}.
+\Autoref{sec:faster_rcnn} introduces the \FRCNN{} architecture \citep{faster_rcnn}, which we borrowed from object detection as a mean of establishing a baseline. Then, \autoref{sec:ctpn} presents the the Connectionist Text Proposal Network (\CTPN{}, \citet{ctpn}) which brings a series of improvements in order to specialise for text detection. We present several experiments in \autoref{sec:detection_experiments} along with the requirements of a good detection system and the evaluation techniques used for measuring them. We shall use the same space to address the problem of missing annotated data, as each experiment brings more adequate ways of data generation. Finally, we conclude the chapter with an overview of the results in \autoref{sec:detection_results}.
 
 %========================================================================================
 
@@ -13,39 +13,36 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	\begin{figure}
 		\includegraphics[width=0.85\linewidth]{fasterrcnn_diagram.pdf}
-		\caption[The \FRCNN{} architecture]{(credit to \cite{detection_benchmark}) \label{fig:faster_rcnn}}
-		% \caption[The architecture]{(credit to)}
+		\caption[The \FRCNN{} architecture]{The \FRCNN{} architecture (credit to \cite{detection_benchmark}) \label{fig:faster_rcnn}}
 	\end{figure}
 
-	The task of object detection builds upon that of image classification. Architectures based on region proposals (see \autoref{sec:related_detection}) can be seen as a two stage algorithm: the first part extracts possible object bounding boxes as a sub-image of the input, while the second one predicts the class associated with each candidate. It is of no surprise then that object detection greatly benefits from the super-human accuracy of deep neural networks \citep{superhuman_classif}. We chose to pair the \FRCNN{} detection architecture with the \RESNET{} feature extractor \citep{resnet}, since this has been proven as a good trade-off between detection accuracy and speed on the standard challenge of ILSCVR \citep{detection_benchmark}. In what follows we present the main building blocks of this architecture.
+	The task of object detection builds upon that of image classification since architectures based on region proposals (see \autoref{sec:related_detection}) can be seen as a two stage algorithm: the first part extracts possible object bounding boxes as a sub-image of the input, while the second one predicts the class associated with each candidate. It is of no surprise then that object detection greatly benefits from the super-human accuracy of deep neural networks \citep{superhuman_classif}. We chose to pair the \FRCNN{} detection architecture with the \RESNET{} feature extractor \citep{resnet}, since this has been proved to give a good trade-off between speed and detection accuracy on the standard challenge of ILSCVR \citep{detection_benchmark}. In what follows we present the main building blocks of this architecture.
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Feature extraction}\label{sec:resnet}
 		In order to perform detection on an input image, we first need to extract representative high-level features from the raw pixel values. To this end, we employ the \RESNET{} convolutional architecture which has won many competitions in classification, detection and segmentation.
 
-		The novelty of this approach\footnote{\todo{Should I dedicate a subsection to describe how (Conv) Neural Nets work?}} relies in forcing the network to learn a \emph{residual} mapping \(\mathcal{F}(\ve{x}) := \mathcal{H}(\ve{x}) - \ve{x}\), where \(\mathcal{H}(\ve{x})\) represents a desired mapping from input \(\ve{x}\), which is to be fit through a few stacked layers. This comes from the observation that the optimal function to be learnt could be closer to the identity mapping than to a zero mapping. Therefore, the new formulation eases the job of the optimiser since it only has to find perturbations around the identity mapping, rather than learn a completely new function.
+		The novelty of this approach relies in forcing the network to learn a \emph{residual} mapping \(\mathcal{F}(\ve{x}) := \mathcal{H}(\ve{x}) - \ve{x}\), where \(\mathcal{H}(\ve{x})\) represents a desired mapping from input \(\ve{x}\), which is to be fit through a few stacked layers (\autoref{fig:resnet} left). This comes from the observation that the optimal function to be learnt could be closer to the identity mapping than to a zero mapping. Therefore, the new formulation eases the job of the optimiser since it only has to find perturbations around the identity mapping, rather than learn a completely new function.
 		% http://www.robots.ox.ac.uk/~vgg/publications/2015/Jaderberg15b/jaderberg15b.pdf gives a good started about many things, including how ConvNets work
 
 		Moreover, in order to keep the number of parameters as small as possible and have reasonable training times for very deep architectures (101 layers), standard convolutions are replaced by bottleneck-blocks of convolutions (\autoref{fig:resnet} right). Such blocks are formed by concatenating a \(1 \times 1\) convolutional layer at each end of the \(3 \times 3\) layer. The ``prefix'' layer reduces the number of filters while the ``suffix'' one increases it back, thus reducing the computational cost of the heavier middle layer.
 
 		\begin{figure}
-			\includegraphics[width=0.85\linewidth]{resnet}
+			\includegraphics[width=0.85\linewidth]{resnet_blue}
 			\caption[ResNet blocks]{
-				(\citet{resnet})
-				\todo{Add \(\mathcal{H}(\ve{x})\) on the schema and small explanation.}
+				The left part represents a normal ResNet block which forces the network to learn the residual mapping \(\mathcal{F}(\ve{x}) := \mathcal{H}(\ve{x}) - \ve{x}\) through the skip connection shown in blue. The right part shows a ``bottleneck'' block used in \RESNET{}.
+				\citep{resnet}
 				\label{fig:resnet}
 			}
 		\end{figure}
-
-		\todo{Show examples of extracted features for detection ? }
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Region proposal network}\label{sec:frcnn_rpn}
 		In order to bring the inference speed closer to real-time, \FRCNN{} improves on the bottleneck of previous approaches, namely the proposal of object candidates. Instead of relying on highly-engineered low-level features of super-pixels, the architecture reuses the convolutional feature map generated for the region classification step.
 
-		This is achieved through another small, fully-convolutional network which is slided along the final layer of the feature map. The window at each location is projected into a lower dimensional feature that is used to predict \(k\) region bounds as well as \(k\) ``objectness'' scores. Each predicted region \(k_i\) is encoded as 4  coordinates \((x_1, y_1, x_2, y_2)_i\) that are \emph{relative} to a set of predefined boxes called \emph{anchors}. This mechanism allows the detection of multiple scales and aspect ratios in one pass through the network, thus avoiding the need of image pyramids and further reducing the computational cost.
+		This is achieved through another small, fully-convolutional network which is slided along the final layer of the feature map. The window at each location is projected into a lower dimensional feature that is used to predict \(k\) region bounds as well as \(k\) ``objectness'' scores. Each predicted region \(k_i\) is encoded as 4 coordinates \((x, y, w, h)_i\) that define the bounding box \emph{relative} to a set of predefined boxes called \emph{anchors}. This mechanism allows the detection of multiple scales and aspect ratios in one pass through the network, thus avoiding the need of image pyramids and further reducing the computational cost.
 
 		For training the RPN, the following loss function has to be minimised:
 		\begin{equation}\label{eq:rpn_loss}
@@ -53,34 +50,96 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\end{equation}
 		\(p_i\) represents the probability that anchor \(i\) is an object; \(p^{*}_i\) is the label of this anchor (\(1\) when it significantly overlaps a ground truth box) and \(t_i, t^{*}_i\) encode the anchor's and ground truth's coordinates, respectively.
 
-		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground truth box with an Intersection-over-Union (IoU) ratio above threshold \(\tau = 0.7\).
+		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground truth box with an Intersection-over-Union (\(\iou\)) ratio above threshold \(\tau_+ = 0.7\).
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Training}\label{sec:frcnn_train}
-		In addition to the RPN, the \FRCNN{} architecture also needs to classify the generated proposals. For this, it uses the Fast R-CNN architecture and trains both of them at the same time, as shown in \autoref{fig:faster_rcnn}. The forward pass generates box proposals that the classifier considers to be fixed for its training. This easy implementation ignores the gradients with regards to the coordinates of the proposal boxes, so it is only an approximation of the joint training procedure. However, its results are close to those obtained by alternating the training of the two networks, while being significantly faster.
+		In addition to generating object candidates with the RPN, the \FRCNN{} architecture also needs to classify the generated proposals. For this, it uses the Fast R-CNN architecture and trains both of them at the same time, as shown in \autoref{fig:faster_rcnn}. The forward pass generates box proposals that the classifier considers to be fixed for its training. This easy implementation ignores the gradients with regards to the coordinates of the proposal boxes, so it is only an approximation of the joint training procedure. However, its results are close to those obtained by alternating the training of the two networks, while being significantly faster.
 
 		Instead of training the whole architecture from scratch, we gain significant time by using transfer learning and starting with a model that performs well on the ImageNet challenge. We replace its final softmax layer so that it only predicts among our two classes of interest: \texttt{text} or \texttt{background}.
 
-		We hypothesize that the object / not-object distinction is easier to make for text detection in white background documents than it is for an ImageNet object. Therefore, we set hyperparameter \(\lambda = 2\) in order to give preference to the localisation loss. Moreover, in order to account for text's wide aspect ratio and relatively constant height in our documents, we generate similarly wide anchors (ratios \(\{2, 4, 6, 8, 10\}\)) with a limited set of scales (heights of \(\{50, 75, 100\}\)px). This further helps the box regression part to converge.
+		We hypothesize that the object / not-object distinction is easier to make for text on white background documents than it is for an ImageNet object in the wild. Therefore, we set hyperparameter \(\lambda = 2\) in order to give preference to the box regression loss. Moreover, in order to account for text's wide aspect ratio and relatively constant height in our documents, we change the default anchors to be similarly wide (ratios \(\{2, 4, 6, 8, 10\}\)) and with a limited set of scales (heights of \(\{50, 75, 100\}\)px). This further helps the box regression part to converge.
 
-		We use the stochastic gradient descent (SGD) optimiser with momentum, on batches of 1 input image. Note, however, that a minibatch is formed of bounding boxes, so many candidates can be generated from a single input image and a set of anchors. Several hyper-parameters control the composition of the batches:
+		We use the stochastic gradient descent (SGD) optimiser with momentum which updates the weights \(\ve{W}\) of the network using an exponential moving average of the gradients:\[
+		\begin{split}
+			\ve{V}_t &= \beta \ve{V}_{t-1} + (1-\beta) \nabla_w L (\ve{W}, \ve{X}, \ve{y}),\\
+			\ve{W} &= \ve{W} - \alpha \ve{V}_t,
+		\end{split}
+		\]
+		where \(\alpha\) is the learning rate and \(\beta\) is the momentum value. We use \(\beta = 0.9\) and a step decay schedule for the learning rate \[
+			\alpha = \alpha_0 * 0.3 ^ {\floor{\frac{\mathit{step}}{1000}}},
+		\]
+		which starts with the initial learning rate \(\alpha_0 = 0.003\) and decreases it every 1000 steps.
+
+		We feed the network one image at a time, resized such that its shorter side is \(600\mathit{px}\) wide. Note, however, that a minibatch is formed of bounding boxes, so many candidates can be generated from a single input image and a set of anchors. Several hyper-parameters control the composition of the batches:
 		\begin{description}
 			\item[number of proposals (\(\mathit{value} = 300\))] How many object proposals are generated in each batch.
 
 			\item[positive to negative ratio (\(\mathit{value} = 0.5\))] For a robust classification and convergence of ``objectness'' score, it is important that examples of both positive and negative candidates are generated.
 
-			\item[positive IoU threshold (\(\tau_{+} = 0.7\))] An anchor is considered positive when \(\mathit{overlap}(\mathit{anchor}, \mathit{truthBox}) > \tau_+\). While \(0.7\) can be considered low for text objects (see \autoref{fig:text_overlap_example}), setting this value too high in the early stages leads to a lower number of positive candidate and slows down convergence of \(L_{cls}\).
+			\item[positive IoU threshold (\(\tau_{+} = 0.7\))] An anchor is considered positive when \(\mathit{overlap}(\mathit{anchor}, \mathit{truthBox}) > \tau_+\). While \(0.7\) could be considered low for text objects (see \autoref{fig:text_overlap_example}), setting this value too high in the early stages leads to a lower number of positive candidate and slows down convergence of \(L_{cls}\).
 
 			\item[negative IoU threshold (\(\tau_{-} = 0.3\))] Similar to \(\tau_{+}\), but for marking candidates as negative examples.
 
 			\item[NMS confidence threshold (\(\mathit{value} = 0.0\))] When a candidate has a low confidence score, we can supress it from contributing to the loss. We effectively disable this filter because we want to force the network to give high-confidence predictions, therefore it should learn from all examples.
 
-			\item[NMS IoU threshold (\(\tau_{\textsc{nms}} = 0.7\))] When several proposals overlap each other, we should keep only one of them in order to encourage proposal's diversity. This parameter controls when we can consider that a proposal is redundant to another one, in terms of their overlap.
+			\item[NMS IoU threshold (\(\tau_{\textsc{nms}} = 0.7\))] When several proposals overlap each other, we should keep only one of them in the batch in order to increase proposal's diversity. This parameter controls when we can consider that a proposal is redundant to another one, in terms of their overlap.
 
 		\end{description}
 
 		On every experiment we monitor the training progress by intermittently evaluating the model on a validation dataset of images from the same category. The training is stopped once there is no significant improvement for more than two epochs, despite a decreasing learning rate.
+
+
+%========================================================================================
+
+\section{Connectionist Text Proposal Network}\label{sec:ctpn}
+	% http://i.cs.hku.hk/~kykwong/publications/wliu_bmvc16.pdf This has a good simple explanation of ResNet and LSTM and what-not
+
+	Once we established the feasability of object detection techniques for our task via \FRCNN{}, we searched for improvements that could increase the quality of the detections. The rest of the section presents an extension to the previous architecture based on the work of \citet{CRNN} which is designed specifically for text detection.
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{RPN becomes CTPN}
+		The main novelty of \FRCNN{} consisted of generating object candidates with a fast additional network based on a set of anchors which are combined in different scales and aspect ratios. This work builds on the observation that text does not have a closed boundary since it is composed of a sequence of letters and strokes. As such, a text ``object'' can have arbitrary width, which is difficult to accomodate with the standard anchor mechanism. The algorithm would need anchors of many different aspect ratios and even so, it would still be difficult to completely detect a line that is much longer than any of the ones in the training set.
+
+		The \CTPN{} architecture proposes an ingenious solution: break down text objects into a series of adjacent boxes of constant-width and similar height; consequently, learn to predict a series of anchors that respect the same constraints, called \emph{fine-scale} proposals (\autoref{fig:ctpn_splitting}). Therefore, the RPN now only has to learn text-specific features of a reduced bounding box. In addition, the box regression is only concerned with the anchor's height, since the width is fixed.
+
+		While the above is a clever twist on the original RPN, the merging of fine-scale proposals requires high-confidence outputs for all candidates in a series, i.e. for all boxes on the same line; otherwise it easily results in a segmented prediction. This is problematic especially when we want to detect multiple words as a single sequence on a line (\autoref{fig:ctpn_merging}), since each box is judged independently, based on its contents. As a solution, the series aspect should be exploited, and box prediction should make use of the context. To this end, the text proposal network is enhanced with a bi-directional LSTM layer that sits of top of the sliding window network and propagates context between multiple predictions (\autoref{fig:ctpn_arch}). In this way, the network provides more consistency both for the confidence and for the heights of the boxes.
+
+		A final refinement mentioned in the original paper consists of a regression of side margins of the first and last anchors on a detected line. Since we achieved good results without this part, we postponed its implementation for future improvements.
+
+		\begin{figure}
+			\begin{subfigure}[c]{.69\linewidth}
+				\includegraphics{ctpn_architecture}
+				\caption{Overview}\label{fig:ctpn_arch}
+			\end{subfigure}
+			\begin{subfigure}[c]{.30\linewidth}
+				\begin{subfigure}{\linewidth}
+					\includegraphics{ctpn_orig}
+					\includegraphics{ctpn_split}
+					\caption{Box splitting}\label{fig:ctpn_splitting}
+				\end{subfigure}
+				\par\bigskip
+				\begin{subfigure}{\linewidth}
+					\includegraphics{ctpn_recon_fine}
+					\includegraphics{ctpn_recon_merged}
+					\caption{Box merging}\label{fig:ctpn_merging}
+				\end{subfigure}
+			\end{subfigure}
+			\caption[The Connectionist Text Proposal Network]{The Connectionist Text Proposal Network:
+
+			\subref{fig:ctpn_arch} The architecture comprises the VGG feature extractor, succeeded by a fully-convolutional network coupled with an LSTM for fine-scale proposals.
+
+ 			\subref{fig:ctpn_splitting} Original bounding box and the corresponding series of equal width boxes.
+
+ 			\subref{fig:ctpn_merging} Predicted fine-scale proposals and the resulting bounding boxes. Note the limited merging due to missing proposals.
+			}
+		\end{figure}
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Training}
 
 
 %========================================================================================
@@ -248,7 +307,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\begin{subfigure}{\linewidth}
 				\includegraphics[width=.49\linewidth]{binarisation_template}
 				\includegraphics[width=.49\linewidth]{binarisation_real}
-				\caption{Besides being gray, text from the RIMES database has soft edges, while text from real documents has a hard transition from foreground to background.}
+				\caption{In addition to being gray, text from the RIMES database has soft edges, while text from real documents has a hard transition from foreground to background.}
 				\label{fig:template_gray_example}
 			\end{subfigure}
 			\caption{Differences between \ds{Template} and \ds{TEST}}
@@ -320,38 +379,6 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 %========================================================================================
 
 
-\section{Connectionist Text Proposal Network}\label{sec:ctpn}
-	% http://i.cs.hku.hk/~kykwong/publications/wliu_bmvc16.pdf This has a good simple explanation of ResNet and LSTM and what-not
-
-	After establishing the feasability of text detection, we started working on the transcription step. However, in parallel we continued searching for improvements, as the above results are not robust enough for reliable transcription. The rest of the section presents an extension to the \FRCNN{} architecture based on the work of \citet{CRNN} as well as a more accurate dataset that was used to train it.
-
-	%----------------------------------------------------------------------------------------
-
-	\subsection{RPN becomes CTPN}
-		The main novelty of \FRCNN{} consisted of a fast and accurate additional network that proposes object candidates based on a set of anchors which are combined in different scales and aspect ratios. This work builds on the observation that text is composed of a sequence of letters and, as such, a text ``object'' can have arbitrary width. This is difficult to accomodate with the standard anchor mechanism, as it would need many different aspect ratios. Even so, it would still not be able to completely detect a line that is much longer than any of the ones in the training set.
-
-		The authors propose a clever solution: break down text objects into a series of adjacent boxes of constant-width and similar height; consequently, learn to predict a series of anchors that respect the same constraints, called \emph{fine-scale} proposals (\autoref{fig:ctpn_splitting}). Therefore, the architecture now only has to learn text-specific features of a reduced bounding box. In addition, the box regression is only concerned with the anchor's height, since the width is fixed.
-
-		While the above is a clever twist on the original RPN, the merging of fine-scale proposals requires high-confidence outputs for all candidates in a series, i.e. for all boxes on the same line; otherwise it easily results in a segmented prediction. This is problematic especially when we want to detect multiple words as a single sequence on a line (\autoref{fig:ctpn_merging}). To solve this problem the \CTPN{} architecture also brings a novel extension in the form of a bi-directional LSTM that sits of top of the sliding window network. This exploits the \emph{sequence} part of the character string and propagates the context between multiple predictions. In this way, the network provides more consistency both for the confidence and for the heights of the boxes.
-
-		A final refinement mentioned in the original paper consists of a regression of side margins of the first and last anchors on a detected line. Since we achieved good results without this part, we postponed its implementation for future improvements.
-
-		\begin{figure}
-			\begin{subfigure}[b]{\linewidth}
-				\includegraphics[width=.45\linewidth, valign=c]{ctpn_orig}
-				\(\Longrightarrow\)
-				\includegraphics[width=.49\linewidth, valign=c]{ctpn_split}
-				\caption{\CTPN{} splitting -- Original bounding box and the corresponding series of equal width boxes.}\label{fig:ctpn_splitting}
-			\end{subfigure}
-			\par\bigskip
-			\begin{subfigure}[b]{\linewidth}
-				\includegraphics[width=.49\linewidth, valign=c]{ctpn_recon_fine}
-				\(\Longrightarrow\)
-				\includegraphics[width=.49\linewidth, valign=c]{ctpn_recon_merged}
-				\caption{\CTPN{} prediction -- Left: predicted fine-scale proposals. Right: Resulting bounding boxes. Note the limited merging due to missing proposals.}\label{fig:ctpn_merging}
-			\end{subfigure}
-			\caption{\CTPN{} splitting and merging}
-		\end{figure}
 
 	%----------------------------------------------------------------------------------------
 

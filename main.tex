@@ -62,13 +62,18 @@
 \makeatother
 %% =============================================================================
 
-\usepackage{amsmath, amssymb}
+\usepackage{amsmath, amssymb,mathtools}
 \DeclareMathOperator*{\argmin}{argmin} % * means the argument in _{} is placed below rather than to the right
 \DeclareMathOperator{\argmax}{argmax} % * means the argument in _{} is placed below rather than to the right
 \DeclareMathOperator{\iou}{IoU}
 \DeclareMathOperator{\AP}{\operatorname{AP}_{\iou > 0.5}}
 \providecommand{\norm}[1]{\lVert#1\rVert} % unlike \newcommand, this does nothing if \norm already exists
 \providecommand{\card}[1]{\left\vert#1\right\vert}
+% \DeclarePairedDelimiter\norm{\lVert}{\rVert}
+% \DeclarePairedDelimiter\card{\left\vert}{\right\vert}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
 \newcommand*{\ve}[1]{\mathbf{#1}} % for displaying a vector
 \newcommand*{\ma}[1]{\mathrm{#1}} % for displaying a matrix
 \newcommand*{\cls}{\mathit{cls}} % for RPN loss
@@ -81,37 +86,40 @@
 \endgroup
 
 
+%----------------------------------------------------------------------------------------
 \usepackage{graphicx}
-\graphicspath{{./images/}}
-\setkeys{Gin}{width=\linewidth} % set \includegraphics default width
+  \graphicspath{{./images/}}
+  \setkeys{Gin}{width=\linewidth} % set \includegraphics default width
+  \usepackage[export]{adjustbox} % used to align some images with the text between them (valign=c)
+%----------------------------------------------------------------------------------------
 
-\usepackage[export]{adjustbox} % used to align some images with the text between them (valign=c)
+\usepackage[compatibility=false]{caption}
+\usepackage{subcaption}
+  % \subref -> '(a)' rather than just 'a'
+  \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
+  \renewcommand\thesubfigure{(\alph{subfigure})}
+  \makeatletter
+  \renewcommand\p@subfigure{\thefigure~}
+  \makeatother
+  % make the caption a bit shorter than the rest of the text, with bold font for label
+  \captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 
-\usepackage{caption,subcaption}
-% \subref -> '(a)' rather than just 'a'
-\captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
-\renewcommand\thesubfigure{(\alph{subfigure})}
-\makeatletter
-\renewcommand\p@subfigure{\thefigure~}
-\makeatother
-% make the caption a bit shorter than the rest of the text, with bold font for label
-\captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
+  % try to include the short caption title in the long one
+  % it doesn't work https://tex.stackexchange.com/questions/127921/
+  % \usepackage{xpatch}
+  % \tracingpatches
+  % \makeatletter
+  % \patchcmd{\@caption}{#3}{#2~--~#3}{}{}
+  % \makeatother
 
-% try to include the short caption title in the long one
-% it doesn't work https://tex.stackexchange.com/questions/127921/
-% \usepackage{xpatch}
-% \tracingpatches
-% \makeatletter
-% \patchcmd{\@caption}{#3}{#2~--~#3}{}{}
-% % \xshowcmd\@caption
-% \makeatother
+  % \@caption=\long macro:
+  % #1[#2]#3->\par \addcontentsline {\csname ext@#1\endcsname }{#1}{\protect \numbe
+  % rline {\csname the#1\endcsname }{\ignorespaces #2}}\begingroup \@parboxrestore
+  % \if@minipage \@setminipage \fi \normalsize \@makecaption {\csname fnum@#1\endcs
+  % name }{\ignorespaces #3}\par \endgroup .
+  % <recently read> \@caption
+%----------------------------------------------------------------------------------------
 
-% \@caption=\long macro:
-% #1[#2]#3->\par \addcontentsline {\csname ext@#1\endcsname }{#1}{\protect \numbe
-% rline {\csname the#1\endcsname }{\ignorespaces #2}}\begingroup \@parboxrestore
-% \if@minipage \@setminipage \fi \normalsize \@makecaption {\csname fnum@#1\endcs
-% name }{\ignorespaces #3}\par \endgroup .
-% <recently read> \@caption
 
 \input{hyperref_config}
 
@@ -149,7 +157,7 @@
   \newcommand{\newcommandb}[2]{\@ifdefinable{#1}{\def#1##{#2}}}
   \makeatother
 
-  \newcommandb{\FRCNN}{\mbox{\pkg{Faster R-CNN}}}
+  \newcommandb{\FRCNN}{\pkg{Faster \mbox{R-CNN}}}
   \newcommandb{\CTPN}{\mbox{\pkg{CTPN}}}
   \newcommandb{\RESNET}{\mbox{\pkg{ResNet-101}}}
   \newcommandb{\CRNN}{\mbox{\pkg{CRNN}}}
