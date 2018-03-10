@@ -1,10 +1,12 @@
 %!TEX root = ../main.tex
 
-\chapter{Transcription}
-\label{ch:transcription}
-This chapter is dedicated to the problem of offine handwriting recognition, that is, given an image of a text line, find the corresponding characters and words. Although some may consider it a solved task, since many approaches achieve very good performance on a wide variety of corpora (see \autoref{sec:related_transcription}), we remind the reader that our use case poses several challenges that are not present in the controlled environments of academic contests (\autoref{sec:challenges}). Of these, we restate the most important ones:
+\chapter{Transcription}\label{ch:transcription}
+
+This chapter is dedicated to the problem of offine handwriting recognition, that is, given an image of a text line, find the corresponding characters and words. Although some may consider it a solved task, since many approaches achieve very good performance on a wide variety of corpora (see \autoref{sec:related_transcription}), we remind the reader that our use case poses several challenges that are not present in the controlled environments of academic contests (\autoref{sec:challenges}). Of these, we summarise the most important ones:
 \begin{description}
-	\item[unbefitting writing conditions] The documents are completed in a rush, soon after an accident, with no proper support structure for writting and without restrictions with regards to content.
+	\item[unbefitting writing conditions] The documents are completed in a rush, soon after an accident, with no proper support structure for writting and with few format restrictions.
+
+	\item[unconstrained recognition] Statements include text which does not admit a vocabulary for correction, such as phone numbers and license plates.
 
 	\item[lack of annotated data] As in the case of detection, we started the project having only a database of images and no useful annotations.
 \end{description}
@@ -12,15 +14,21 @@ This chapter is dedicated to the problem of offine handwriting recognition, that
 The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has become almost a standard for optical character recognition in the recent years. Then, \autoref{sec:transcription_experiments} presents several experiments for training, including various methods of data generation. Each new experiment tries to address the weaknesses of the previous one, in a quest of reproducing the great results obtained on clean databases. Finally, we explore the potential of an attention-based architecture coupled with the same training data in \autoref{sec:attention} and present an overview of the obtained results in \autoref{sec:transcription_results}.
 
 
-\startToDo{}
 
 %========================================================================================
 
 \section{Convolutional Recurrent Neural Networks}\label{sec:crnn}
 
+	Text transcription has preoccupied researchers for a very long time. Therefore, a large amount of ideas have been tried in order to solve this problem, of which we mention a few in \autoref{sec:related_transcription}. One of the challenges of text resides its wide variation of appearance. For example, a free font website such as \url{http://www.1001fonts.com/} currently lists approximately 9500 different typefaces. Moreover, it is believed that each person has a completely unique handwriting, which is why this is still commonly used a signature. This highlights the importance of being able to represent images of text robustly, or, in other words, to extract good features that distinguish well among characters. As was previously stated, convolutional neural networks have proved very effective in this task time and again, so it is natural to use them as a first stage in a transcription architecture.
+
+	Another peculiarity of text, which we have also mentioned in the detection chapter, is given by its sequential aspect. Few neural network architectures support arbitrarily-sized input. Of these, the recurrent neural network (RNN) has become a standard since it models well sequences of any type.
+
+	The Convolutional Recurrent Neural Network (\CRNN{}) architecture uses the two approaches above in a unified framework to transcribe text from natural images. Considering that it achieved state-of-the-art performance in such a challenging task, we believe it is suitable for our use case as well, which is why we focused most of our efforts in this direction. Next, we detail its inner workings as they are crucial in devising our experiments.
+
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Feature extraction}
+\startToDo{}
 
 	%----------------------------------------------------------------------------------------
 
