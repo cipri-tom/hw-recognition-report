@@ -162,9 +162,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 \section{Datasets and experiments}\label{sec:detection_experiments}
 	%-- INTRO -------------------------------------------------------------------------------
-		Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed to train our architectures. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a specific format and less than optimal quality.
+		Given the large number of parameters in deep neural networks (\(\approx 6 \times 10^8\) for \RESNET{}), it is clear that large amounts of training data are needed to train our architectures. Since this is lacking for our project, we must find alternative sources of handwritten text, ideally in the same language as the documents, i.e. French. Moreover, as was noted in \autoref{sec:challenges}, our documents have a difficult, albeit well-defined format, and less than optimal quality.
 
-		The RIMES database \citep{rimes} is the result of a huge data collection effort by the French ministries of defense and research, which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)). We will base most of our experiments on this collection of handwritten text, though the following sections will detail different ways of adapting it to our use case. Additionally, we will also use our handwriting generator from \autoref{sec:generator} to \todo{analyse the influence of the training set and to overcome limitations of the RIMES database}.
+		The RIMES database \citep{rimes} is the result of a huge data collection effort by the French ministries of defense and research, which was set up in order to create a new, consistent database of handwritten text. Its novelty was that it also included mixed pages, with handwritten and printed text, as well as being almost completely unconstrained with regards to the content of the text.	It contains more than \(50\,000\) handwritten words that are made available individually, or in lines (more than \(9000\)), or in paragraphs (more than \(1500\)). We will base most of our experiments on this collection of handwritten text, though the following sections will detail different ways of adapting it to our use case. Additionally, we will also use our handwriting generator from \autoref{sec:generator} to analyse the influence of the training set and to overcome limitations of the RIMES database.
 
 	%----------------------------------------------------------------------------------------
 
@@ -208,7 +208,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\subsection{Collage of paragraphs}
 		\subsubsection*{\ds{Collage} dataset}
 
-			For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders, similarly to the sections in a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation.
+			For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders to look similar to the sections of a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation.
 
 		%----------------------------------------------------------------------------------------
 
@@ -266,7 +266,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\end{minipage}
 			\\
 
-			To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 75\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
+			To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 70\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
 
 			\begin{figure}
 				\includegraphics{template_empty}
@@ -315,7 +315,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		%........................................................................................
 
 		\subsubsection*{Outcome}
-			With the above techniques we generated 2000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{TEST} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
+			With the above techniques we generated 1000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{TEST} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
 
 			\begin{figure}
 				\begin{subfigure}{\linewidth}
@@ -356,7 +356,24 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		%........................................................................................
 		\subsubsection*{Outcome}
 
-			\todo{GOTTA DO IT !}
+			This model was the fastest to converge of all, attaining a validation \(\AP = 0.98\) in approximately 3500 iterations. However, when visually inspecting a small detection sample of validation images at \(\mathit{step} = 3500\), we note a relatively low recall compared to expectations from previous model (\autoref{fig:gen_detection}). This could be explained by the complete separation of validation and training data, the two being generated with completely different text and sets of fonts. Additionally, we also note a higher than usual loss of the classification core, which means that the RPN learnt quickly to propose text-like boxes, but the classification network was not yet sure which ones correspond to handwriting. This is expected to a certain degree since printed and handwritten text are very similar in our documents. Finally, the apparent high performance despite the visually low recall highlights why a more in-depth analysis is needed.
+
+			We further trained the model for another 4000 steps, until the classification loss also converged; the validation precision remained the same. At this point, we tested the model on the \ds{TEST} set and noted approximately 10\% improvement over the previous best, with \(\AP = 0.47\).
+
+			\begin{figure}
+				% floatrow magic for having sidecaption https://tex.stackexchange.com/a/29144/76755
+				\floatbox[{\capbeside\thisfloatsetup{capbesideposition={left,top},capbesidewidth=.5\linewidth}}]{figure}
+				{
+					\caption[\ds{Template_gen} detection]{Despite reporting almost perfect precision after 3500 steps, a \FRCNN{} model trained on \ds{Template_gen} dataset exhibits quite a low recall that is hard to explain. This small example shows similarly looking text; some of it was detected with maximal confidence, some of it was ignored. Black boxes represent ground truth and are \emph{not} part of the image. }
+					\label{fig:gen_detection}
+				}
+				{\includegraphics{gen_detection_no}}
+			\end{figure}
+
+	%----------------------------------------------------------------------------------------
+	\subsection{CTPN test}
+		Having proved the feasability of general object detection architectures for our task, we started seeking further improvements by emplying the text-specialised architecture of \CTPN{}. We build upon the previous progress and train directly on the dataset with best results so far, \ds{Template_gen}.
+
 
 %========================================================================================
 
@@ -444,14 +461,6 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
 %----------------------------------------------------------------------------------------
 
-		%----------------------------------------------------------------------------------------
-
-		\subsubsection{Filling with generator}
-		\startToDo
-			Should we actually mention this, given that we only introduce the generator later, for transcription ?
-
-			Also, no tests for \FRCNN{} + Generator data, only \CTPN{}. So, should I include it here or later in CTPN section ?
-		\stopToDo
 
 %========================================================================================
 
