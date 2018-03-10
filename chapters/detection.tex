@@ -112,7 +112,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		that sits of top of the sliding window network and propagates context between multiple predictions (\autoref{fig:ctpn_arch}). In this way, the network provides more consistency both for the confidence and for the heights of the boxes.
 
 		A final refinement mentioned in the original paper consists of a regression of side margins of the first and last anchors on a detected line. Since we achieved good results without this part, we postponed its implementation for future improvements. As such, the loss function becomes almost identical to the RPN loss:
-		\begin{equation*}\label{eq:rpn_loss}
+		\begin{equation*}\label{eq:ctpn_loss}
 		L(\ve{p}_i, \ve{v}_i) =
 			\frac{1}{N_{\cls}}\sum_i L_{\cls}(\ve{p}_i, \ve{p}^{*}_i)
 			+ \lambda\frac{1}{N_{\reg}}\sum_j L_{\reg}(\ve{v}_j, \ve{v}^{*}_j),
@@ -364,7 +364,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 			\begin{figure}
 				% floatrow magic for having sidecaption https://tex.stackexchange.com/a/29144/76755
-				\floatbox[{\capbeside\thisfloatsetup{capbesideposition={left,top},capbesidewidth=.5\linewidth}}]{figure}
+				\floatbox[{\capbeside\thisfloatsetup{capbesideposition={left,top},capbesidewidth=.48\linewidth}}]{figure}
 				{
 					\caption[\ds{Template_gen} detection]{Despite reporting almost perfect precision after 3500 steps, a \FRCNN{} model trained on \ds{Template_gen} dataset exhibits quite a low recall that is hard to explain. This small example shows similarly looking text; some of it was detected with maximal confidence, some of it was ignored. Black boxes represent ground truth and are \emph{not} part of the image. }
 					\label{fig:gen_detection}
@@ -438,9 +438,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\vspace{-2em}
 			\begin{subfigure}{.49\linewidth}
 					\caption{\FRCNN{}}\label{fig:frcnn_results}
-					\includegraphics{frcnns_recall_scores}
-					\includegraphics{frcnns_prec_scores}
-					\includegraphics{frcnns_recall_iou}
+					\includegraphics{frcnn_recall_scores}
+					\includegraphics{frcnn_prec_scores}
+					\includegraphics{frcnn_recall_iou}
 			\end{subfigure}
 			\rulesep
 			\begin{subfigure}{.49\linewidth}
@@ -450,5 +450,4 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 					\includegraphics{ctpn_recall_iou}
 			\end{subfigure}
 			\caption{Text detection results}
-			\label{fig:frcnn_results}
 		\end{figure}
