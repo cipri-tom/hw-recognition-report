@@ -151,7 +151,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Training}
-		Once the \CTPN{} predicts fine-scale proposals, these are classified into \texttt{text} or \texttt{background} by the same Fast R-CNN core as before. However, in this case we use a different feature extractor, namely the VGG network \citep{VGG}, in order to reproduce the setup of the original work. As in the previous case, we do not train from scratch but instead we start with the weights provided by the authors, who used 3000 images of text in the wild.
+		The original paper does not mention how fine-scale proposals are generated from the original bounding boxes, nor how they are merged to predict a large box. We found this to be an important implementation detail as it introduces a hyper-parameter \(\tau_{gap}\) which is a threshold for the maximum gap allowed between two neighbouring proposals. For example, in \autoref{fig:ctpn_merging} a small \(\tau_{gap}\) resulted in an overly-segmented of a word, whereas a too large \(\tau_{gap}\) would have merged the words together. Whether this is desired or not depends on the context. We have set \(\tau_{gap} = 24\)px, which is \(1.5\) times larger than the anchor width.
+
+		Once the \CTPN{} predicts fine-scale proposals, these are classified into \texttt{text} or \texttt{back\-ground} by the same Fast R-CNN core as before. However, in this case we use a different feature extractor, namely the VGG network \citep{VGG}, in order to reproduce the setup of the original work. As in the previous case, we do not train from scratch but instead we start with the weights provided by the authors, who used 3000 images of text in the wild.
 
 		We observed that a large number of the generated anchors were meaningless in our context due to little variation of text height. Therefore, we changed the default set of anchors to use only 3 different heights: \(\{10, 16, 23\}\) pixels which correspond to the most common ground truth heights after resizing the image to be 600px wide. This reduced the iteration time more than three times and also resulted in faster convergence of the training.
 
@@ -290,7 +292,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 			This algorithm works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another text line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
 
-			\begin{figure}[ht]
+			\begin{figure}
 				\begin{subfigure}{\linewidth}
 					\includegraphics{baseline_ok}
 					\caption{Good and clean horizontal image}
@@ -372,113 +374,81 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	%----------------------------------------------------------------------------------------
 	\subsection{CTPN test}
-		Having proved the feasability of general object detection architectures for our task, we started seeking further improvements by emplying the text-specialised architecture of \CTPN{}. We build upon the previous progress and train directly on the dataset with best results so far, \ds{Template_gen}.
+		Having proved the feasability of general object detection architectures for our task, we started seeking further improvements by emplying the text-specialised architecture of \CTPN{}. We build upon the previous progress and train directly on the dataset with best results so far, \ds{Template_gen}. The model converged after 10\,000 steps and achieved a validation \(\AP = 0.69\). Despite giving the best results visually on \ds{TEST} dataset \footnote{\todo{Example in Appendix, with names and addresses censored.}}, it appears to perform worse than the best \FRCNN{} model, with \(\AP = 0.31\).
 
 
 %========================================================================================
 
-%========================================================================================
 
+\section{In-depth evaluation}\label{sec:detection_results}
+	% this evaluates text detection in 2 simple numbers (P, R), in terms of pixels: http://vision.soic.indiana.edu/papers/textevaluation2000das.pdf
 
-%========================================================================================
+	We have seen in the previous section that different combinations of architectures and training datasets achieve vastly different performances on real data. Moreover, as briefly discussed in \autoref{sec:detection_eval}, it is difficult to quantify them through a single number. This was also confirmed empirically when observing that intermediate models with high \(\AP\) scores gave subpar detections. Therefore, in what follows we will perform a more in-depth analysis of models' performace in the interest of finding the factors that contribute to improvement and choosing the most robust model.
 
-\section{Faster R-CNN Results}\label{sec:frcnn_results}
-	\todo{ In addition, having a high recall is more important than predicting with a high confidence, since the transcription phase can easily ignore false positives. For this reason, the comparison in \autoref{sec:frcnn_results} will consider these two criteria for comparing different experiments. }
+	\Citet{objdet_performance} give an overview of different metrics that can be useful for detailed evaluation of object detection algorithms. We are interested in evaluating both the detection \emph{quantity}, as well as its \emph{quality}. However, these two measures are related, since the detection quantity depends on our quality requirements. We could overcome this tight connection by performing evaluation at a higher level thorugh a \emph{goal-directed} approach. In such a case, the text locating algorithms would be judged by the recognition rate they achieve when coupled with a text recogniser. However, this would introduce another dependency in the system and, to the best of our knowledge, no robust system exists yet for handwriting.
 
-	\begin{figure}[ht]
-		\begin{subfigure}{.49\linewidth}
-			\includegraphics{frcnns_recall_scores}
-			\caption{}
-			\label{fig:frcnns_recall_scores}
-		\end{subfigure}
-		\begin{subfigure}{.49\linewidth}
-			\includegraphics{frcnns_prec_scores}
-			\caption{}
-			\label{fig:frcnns_prec_scores}
-		\end{subfigure}
-		\begin{subfigure}{.49\linewidth}
-			\includegraphics{frcnns_recall_iou}
-			\caption{}
-			\label{fig:frcnns_recall_iou}
-		\end{subfigure}
-		\begin{subfigure}{.49\linewidth}
-			\includegraphics{frcnns_prec_iou}
-			\caption{}
-			\label{fig:frcnns_prec_iou}
-		\end{subfigure}
-		\caption{\FRCNN{} results}
-		\label{fig:frcnn_results}
-	\end{figure}
+	We reiterate the main concerns for this evaluation:
+	\begin{description}
+		\item[high recall] A good model should find most of the ground truth boxes.
+		\item[precise detection] Bounding boxes that correspond to ground truth should be tight around the text. Note this is different from the overall precision in general (see next point).
+		\item[variable general precision] We are forgiving about false positive detections, i.e.\ bounding boxes that do not correspond to any ground truth, since we expect the recogniser to fail on these, thus acting as a filter.
+	\end{description}
 
-	\urldef{\cocoURL}\url{http://cocodataset.org/#detections-challenge2017}
+	\subsection{Faster R-CNN}\label{sec:frcnn_results}
+		\urldef{\cocoURL}\url{http://cocodataset.org/#detections-challenge2017}
 
-	We started our training with a model pre-trained for the COCO object detection challenge\footnote{Common Objects in Context \cocoURL}, which claimed an \(\AP \simeq 0.32\). Having reached a similar performance on our \ds{TEST} dataset, we want to evaluate in more detail the behaviour of the model and how it evolved over the three datasets, in order to assess whether further improvements are possible. \Citet{objdet_performance} give an overview of different metrics that can be useful for in-depth evaluation of object detection algorithms. We are interested in evaluating both the detection \emph{quantity}, as well as its \emph{quality}. However, these two measures are related, since the detection quantity depends on our quality requirements.
+		We started our training with a model pre-trained for the COCO object detection challenge\footnote{Common Objects in Context \cocoURL}, which claimed an \(\AP \simeq 0.32\). We have reached a similar performance on our \ds{TEST} dataset. On the one hand, further improvements should be possible since our task has less classes and less background variation. On the other hand, what we call \emph{background} actually consists of printed text, which is very similar in structure to the handwritten one, especially if both are upper case. We will consider this as a baseline and we will inspect how the training data affects the performance.
 
-	In a first phase, we use the confidence scores to rank the detections and we inspect the variation of recall while varying the score threshold (\autoref{fig:frcnns_recall_scores}). Recall at threshold \(\tau\) is defined as the ratio between the number of true positives and the number of \mbox{ground truth} boxes:
-	\[
-		R_{\tau} = \frac{\card{\operatorname{TP}_\tau}}{\card{\operatorname{GT}}}.
-	\]
-	As we are filtering by \emph{confidence} score, we set predicted boxes as true positives when they overlap a ground truth box, regardless of the \(\iou\). This makes it mandatory to also look at the distribution of precision values for the same variation of thresholds (\autoref{fig:frcnns_prec_scores}). Precision at threshold \(\tau\) is defined as the average \(\iou\) of all detected boxes:
-	\[
-			P_\tau = \frac{1}{\card{B^p_i}} \sum_{B^p_{i}} \iou(B^p_i, B^{gt}_i),~~~\operatorname{score}(B^p_i ) > \tau,
-	\]
-	where mapping to ground truth of a predicted box \(B^p_k\) happens greedily and in rank order:
-	\[
-			B^{gt}_k = \argmax_{B^{gt}_i} \iou(B^p_k, B^{gt}_i).
-	\]
-	As expected from the intermediate results, the model trained on \ds{Template_bin} achieves the highest recall, but with low confidence score. However, adding the information from the precision curve, we note that the boxes it gives are better overlapped with the ground truth.
+		%........................................................................................
+		\subsubsection*{Metrics}
+			In a first phase, we use the confidence scores to rank the detections and we inspect the variation of recall while varying the score threshold (\autoref{fig:frcnn_results} top). Recall at threshold \(\tau\) is defined as the ratio between the number of true positives and the number of \mbox{ground truth} boxes:
+			\[
+				R_{\tau} = \frac{\card{\operatorname{TP}_\tau}}{\card{\operatorname{GT}}}.
+			\]
+			Since we are already filtering by \emph{confidence} score, we consider predicted boxes as true positives when they overlap a ground truth box, regardless of the \(\iou\). This allows even the smallest overlap to count as positive. Therefore, it is mandatory to also look at the distribution of precision values for the same variation of thresholds (\autoref{fig:frcnn_results} middle). Precision at threshold \(\tau\) is defined as the average \(\iou\) of all \emph{positive} predictions \(B^p_i\):
+			\[
+					P_\tau = \frac{1}{\card{B^p}}~~~ \sum_{B^p_i,\ \operatorname{score}(B^p_i ) > \tau} \iou(B^p_i, B^{gt}_i),
+			\]
+			where mapping to ground truth of a predicted box \(B^p_i\) happens greedily and in rank order:
+			\[
+					B^{gt}_i = \argmax_{B^{gt}_j} \iou(B^{gt}_j, B^p_i).
+			\]
 
-	If we posit that the confidence score bears less importance in our context, we may approach the problem from a different angle, keeping in mind that we want the detection to be as tight as possible around the text. To this end, we let \(\operatorname{score}(B^p_k) = \iou(B^p_k, B^{gt}_k)\), where the mapping is again done greedily, and we measure \(R_\tau\) and \(P_\tau\). In this case it is more evident that the model trained on \ds{Template_bin} is superior to the others since it maintains a higher recall rate while we filter the boxes to be of increasingly higher quality (\autoref{fig:frcnns_recall_iou}). Moreover, it has a higher overlap precision on average, its worst boxes being of similar quality to those from \ds{Collage}-trained model (\autoref{fig:frcnns_prec_iou}).
+		%........................................................................................
+		\subsubsection*{Results intepretation}
+			As expected from the intermediate results, the model trained on the grayscale dataset \ds{Template} has the lowest recall and precision. However, for the very few boxes that it detects with high confidence (\(c \geq 0.8\)) it also gives very good overlap. This is opposite to the model trained on \ds{Collage}, which seems to have learned to detect the wrong thing, as higher confidence decreases both the recall and the precision.
 
-	In conclusion, we proved that \FRCNN{} is able to learn handwriting specific features and it can use them to detect handwritten text reasonably well. For our model the confidence score of the detected boxes is less helpful for selecting high quality ones, but this is a small problem since false negatives can be filtered at a later time. Alternatively, it is likely that fine tuning on a subset of \ds{TEST} would aid the model to better distinguish between real text and text-like examples. We also note from results like \autoref{fig:template_bin_detection} that the model learnt to detect bounding boxes taller than the actual text due to inaccurate training examples.
+			The model trained on \ds{Template_bin} gives the most intuitive results as the score threshold influences almost linearly both the recall (downwards) and the precision (upwards). Before our text generator was implemented, we believed this to be the maximum achievable with the given datasets. It was then confirmed by the result of model trained on \ds{Template_gen}, which adresses most of the previous limitations. Therefore, it has better recall at all confidence levels, and better precision in general. There seems to be a small exception for high confidence levels (\(c \geq 0.85\)), where \ds{Template_bin} appears to give tighter bounding boxes. However, this is caused by averaging over a smaller number of instances (see recall curve), which is confirmed by the de average deviation of the mean \(\iou\).
 
-%========================================================================================
-
-
+			If we posit that the confidence score bears little importance in our context, we may approach the problem from a different angle, keeping in mind that we want the detection to be as tight as possible around the text. We rank the boxes by their overlap with the mapped ground truth\footnote{The mapping is again done greedily}, i.e.\ \(\operatorname{score}(B^p_k) = \iou(B^p_k, B^{gt}_k)\) thus getting a precision-recall curve (\autoref{fig:frcnn_results} bottom).
+			In this case it is more evident that the model trained on \ds{Template_gen} is superior to the others since it maintains a higher recall rate while we filter the boxes to be of increasingly higher quality.
 
 	%----------------------------------------------------------------------------------------
+	\subsection{Connectionist Text Proposal Network}\label{sec:ctpn_results}
+		We evaluate the results of \CTPN{} architecture using the same \ds{TEST} dataset and, of course, the same metrics as for \FRCNN{}. These are displayed in \autoref{fig:ctpn_results}. The \CTPN{} model gives very high confidence (\(c \geq 0.9\)) for virtually all the outputted boxes. For this reason, the curves filtered by this score are essentially flat.
 
-	%----------------------------------------------------------------------------------------
-
-	\subsection{Results}
-		\begin{figure}[ht]
-			\begin{subfigure}{.49\linewidth}
-				\includegraphics{ctpn_vs_frcnn_recall}
-				\caption{}
-				\label{fig:ctpn_vs_frcnn_recall}
-			\end{subfigure}
-			\begin{subfigure}{.49\linewidth}
-				\includegraphics{ctpn_vs_frcnn_prec}
-				\caption{}
-				\label{fig:ctpn_vs_frcnn_prec}
-			\end{subfigure}
-			\caption{\CTPN{} results}
-			\label{fig:ctpn_results}
+		We can argue, based on the middle and bottom plots, that the model performs worse than the best \FRCNN{} model, giving slightly worse overlaps and with less recall. This contradicts a little our intuition. Visualising the results, we observed that the bounding boxes of \FRCNN{} often cut the sides of text while being a little taller, whereas the \CTPN{} makes a better vertical separation while including more white space to the left and right of text. Such differences are difficult to quantify with our chosen measures. Furthermore, we believe the lower recall of \CTPN{} is due to how we assign detections to ground truth. Namely, each predicted box is assigned \emph{uniquely} to the ground truth of highest overlap; other ground truth boxes covered by the same prediction are counted as undetected. This is unfavourable for the model, since it often merges together predictions lying on the same line (\autoref{fig:ctpn_overzealous_merge}), under the control of hyperparamter \(\tau_{gap}\).
+		\begin{figure}
+			\includegraphics{ctpn_overzealous}
+			\caption[\CTPN{} overzealous merging]{The \CTPN{} predicts a single box covering multiple ground truths in the same line. While essentially correct, since a good transcription system should be able to handle this detection, in our measures only the largest ground truth is counted as detected.}
+			\label{fig:ctpn_overzealous_merge}
 		\end{figure}
 
-
-
-	\todo{Compare and contrast with \FRCNN{} RPN. Also, we use the VGG, because it came with the network}
-%----------------------------------------------------------------------------------------
-
-
-%========================================================================================
-
-
-\section{Results}\label{sec:detection_results}
-	This gives an overview of object detection evaluation:
-
-	% https://www.researchgate.net/profile/Rangachar_Kasturi/publication/220928471_Performance_Evaluation_of_Object_Detection_Algorithms/links/54c91dd00cf25087c4ec62fd.pdf
-
-	this evaluates text detection in 2 simple numbers (P, R), in terms of pixels
-
-	http://vision.soic.indiana.edu/papers/textevaluation2000das.pdf
-
-	\todo{Evaluation method: goal-directed approach = couple with text recognizer; see % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.332.3461&rep=rep1&type=pdf
-	}
-	\todo{
-		Compare all \FRCNN{} with \CTPN{}
-	}
-
-
-%----------------------------------------------------------------------------------------
+		\begin{figure}
+			\vspace{-2em}
+			\begin{subfigure}{.49\linewidth}
+					\caption{\FRCNN{}}\label{fig:frcnn_results}
+					\includegraphics{frcnns_recall_scores}
+					\includegraphics{frcnns_prec_scores}
+					\includegraphics{frcnns_recall_iou}
+			\end{subfigure}
+			\rulesep
+			\begin{subfigure}{.49\linewidth}
+					\caption{\CTPN{}}\label{fig:ctpn_results}
+					\includegraphics{ctpn_recall_scores}
+					\includegraphics{ctpn_prec_scores.png}
+					\includegraphics{ctpn_recall_iou}
+			\end{subfigure}
+			\caption{Text detection results}
+			\label{fig:frcnn_results}
+		\end{figure}

@@ -16,7 +16,6 @@
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
 \usepackage{tabu}
-\usepackage{floatrow}       % automatically centers floats
 
 % set line space nicely (only for text, not captions etc)
 \usepackage{setspace}
@@ -95,6 +94,7 @@
 
 \usepackage[compatibility=false]{caption}
 \usepackage{subcaption}
+\usepackage{floatrow}       % automatically centers floats
   % \subref -> '(a)' rather than just 'a'
   \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
   \renewcommand\thesubfigure{(\alph{subfigure})}
@@ -104,6 +104,7 @@
   % make the caption a bit shorter than the rest of the text, with bold font for label
   \captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 
+  \newcommand{\rulesep}{\unskip\ \vrule\ } % allows to draw vertical line between figures
   % \makeatletter
   % \let\x@caption\caption % original \caption
   % \def\x@@caption[#1]#2{\x@caption[{#1}]{#1 --- #2}} % with optional arg
