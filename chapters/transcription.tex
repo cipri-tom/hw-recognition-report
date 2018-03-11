@@ -64,7 +64,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 			\includegraphics{crnn_rec_field}
 			\caption{Image encoding into sequence of features \citep[credit to][]{CRNN}}\label{fig:crnn_sequence}
 		\end{subfigure}
-		\caption{Convolutional Recurrent Neural Networks}
+		\caption{The \CRNN{} architecture}
 		\end{figure}
 
 	%----------------------------------------------------------------------------------------
@@ -126,9 +126,9 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 		%........................................................................................
 		\subsubsection*{Evaluation}
-			As in the case of text detection, we started with no ground truth labels on real data. Therefore, to have an objective and relevant measure of the models' performance, we also annotated the bounding boxes of the \ds{TEST} dataset. However, the quality for some of these prevented us from providing an accurate transcription. Therefore, we transcribed illegible glyphs with a placeholder character that is not part of the training set. This was done so as to allow wrong predictions at this point while providing normal evaluation for the legible part.
+			As in the case of text detection, we started with no ground truth labels on real data. Therefore, to have an objective and relevant measure of the models' performance, we also annotated the bounding boxes of the \ds{Test} dataset. However, the quality for some of these prevented us from providing an accurate transcription. Therefore, we transcribed illegible glyphs with a placeholder character that is not part of the training set. This was done so as to allow wrong predictions at this point while providing normal evaluation for the legible part.
 
-			Given the small size of the \ds{TEST} dataset of only 1400 examples, no experiments used it either for training or validation. Each model was only evaluated once on this dataset, and we recorded its performance.
+			Given the small size of the \ds{Test} dataset of only 1400 examples, no experiments used it either for training or validation. Each model was only evaluated once on this dataset, and we recorded its performance.
 
 			We use the character error rate (CER) and word error rate (WER) for measuring the performance of different models: \[
 			\begin{aligned}
