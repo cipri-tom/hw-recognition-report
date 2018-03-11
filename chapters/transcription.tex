@@ -113,24 +113,32 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				h(\bm{x}) \approx \mathcal{B}(\pi^*),~~ \text{where } \pi^* = \underset{\pi}{\argmax}~ p(\pi|\bm{x}).
 			\] Decoding in this way can be calculated either with the backward-forward algorithm, or greedily with beam search.
 
-
-
-	%----------------------------------------------------------------------------------------
-
-	\subsection{Training}
-		dropout
-
-		alphabet encoding
-
+			The loss function between a predicted labelling \(h(\bm{x})\) and a target ground truth label \(\bm z\) is calculated as the edit distance between the two, i.e.\ the number of insertions, deletions or substitutions needed to transform one into the other.
 
 	%----------------------------------------------------------------------------------------
 
-	\subsection{Evaluation}
-		edit distance
+	\subsection{Training and evaluation}
+		An input image flows through the convolutional layers and into the LSTM ones, whose predictions are aligned with the ground truth text as explained above. This allows the network to be trained end-to-end on pairs of images and sentences, with the error being back-propagated through all layers. In particular, the LSTM layers use Truncated Back-Propagation Through Time. Also, we noticed improvements when using dropout on the output of the final LSTM with a dropping probability \(p_\mathit{drop} = 0.2\).
 
-		lowercase, uppercase
+		We train the network on batches of 512 images using the Adam optimiser \citep{adam} with a learning rate \(\alpha = 0.001\) and exponential decay rate for the first moment estimates \(\beta_1 = 0.5\). We also tried using an exponentially decreasing learning rate, but found it counter-productive since it needed tuning for each individual corpus or else it would slow down the learning before reaching a plateau.
 
-		mention the TEST corpus and the thing with underscores
+		Finally, we used an alphabet of 81 characters that we identified in the corpus of the RIMES database: \(2 \times 26\) lower and upper-case letters, 10 digits, 13 French-specific letters with diacritics, and 6 symbols. In addition, we set the architecture to treat as errors differences regarding the case of letters during train time.
+
+		%........................................................................................
+		\subsubsection*{Evaluation}
+			As in the case of text detection, we started with no ground truth labels on real data. Therefore, to have an objective and relevant measure of the models' performance, we also annotated the bounding boxes of the \ds{TEST} dataset. However, the quality for some of these prevented us from providing an accurate transcription. Therefore, we transcribed illegible glyphs with a placeholder character that is not part of the training set. This was done so as to allow wrong predictions at this point while providing normal evaluation for the legible part.
+
+			Given the small size of the \ds{TEST} dataset of only 1400 examples, no experiments used it either for training or validation. Each model was only evaluated once on this dataset, and we recorded its performance.
+
+			We use the character error rate (CER) and word error rate (WER) for measuring the performance of different models: \[
+			\begin{aligned}
+				\cer &= \frac{1}{N} \sum_i \operatorname{dist}(\mathit{prediction}_i, \mathit{groundTruth}_i),\\
+				\wer &= \frac{1}{N} \sum_i (1 - \delta (\mathit{prediction}_i, \mathit{groundTruth}_i)),
+			\end{aligned}
+			\]
+			where the \(\operatorname{dist}()\) function evaluates the \emph{un-normalised} edit distance and \(\delta\) outputs 1 if its arguments are the same, letter for letter, or 0 when they differ.
+
+	%----------------------------------------------------------------------------------------
 
 %========================================================================================
 
