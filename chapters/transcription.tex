@@ -38,8 +38,8 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 			\textbf{Type} & \textbf{Configurations}						\tabularnewline	\hline
 																																				\hline
 			Transcription & - 																\tabularnewline	\hline
-			Bidir-LSTM & \#hidden units:256						\tabularnewline	\hline
-			Bidir-LSTM & \#hidden units:256						\tabularnewline	\hline
+			Bi-LSTM & \#hidden units:256						\tabularnewline	\hline
+			Bi-LSTM & \#hidden units:256						\tabularnewline	\hline
 			Map-to-Seq & - 															\tabularnewline	\hline
 			BatchNorm & - 														\tabularnewline	\hline
 			Conv (7) & \#maps:512, k:$2\times2$, s:1, p:0	\tabularnewline	\hline
@@ -87,7 +87,32 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 	%----------------------------------------------------------------------------------------
 
 	\subsection{RNN decoder}
-		The CNN part of the architecture encoded horizontal portions of the image (of full height) into a sequence of high dimensional features, ordered left to right (\autoref{fig:crnn_sequence}). This sequence is then consumed by an RNN decoder in order to produce character representations.
+		The CNN part of the architecture encoded horizontal portions of the image (of full height) into a sequence of high dimensional features, ordered left to right (\autoref{fig:crnn_sequence}). This sequence is then consumed by an RNN decoder in order to produce character representations. To avoid the problem of vanishing gradients in long sequences, the LSTM version is employed \citep{LSTM_original} which uses a combination of gates to control the flow of information inside the cell. By default, an LSTM cell can only use past context in addition to the current input. In our case, future context can be very helpful, so a bi-directional variant of LSTM is used. 	Moreover, using a stack of two such layers allows us to capture more complex contextual dependencies.
+
+		%........................................................................................
+		\subsubsection*{Connectionist Temporal Classification}
+
+			Training RNNs normally requires ground truth labels at each time step. We can see this is problematic in our context, since we only know the final sequence and not how it is aligned to the input image. Moreover, some features in the sequence can correspond to space between the characters, so there is no ground truth for them.
+
+			This problem is solved using the Connectionist Temporal Classification method \citep[CTC; ][]{CTC}. It requires the output of the network to be a softmax output layer with \(N + 1\) units, \(N\) being the size of our alphabet \(L\). Each unit represents the probability of a symbol in the alphabet, and the extra unit corresponds to observing no label, which is denoted by ``\(-\)'', a \emph{blank} symbol . In this way, the outputs define the probabilities of all possible alignments of the input sequence with all possible output sequences.
+
+			Additionally, the method requires a many-to-one mapping function from sequences of network outputs, denoted as \(\pi\), to actual labels, denoted as \(\bm l\): \[
+				\mathcal{B}: L'^T \to L ^{\leq T},~L' = L \cup \{-\},
+			\] where \(L^{\leq T}\) is the set of all possible sequences of length up to \(T\).
+	 		For example, \(\mathcal{B}\) maps \mbox{$\pi$: ``\texttt{$-$fee$-$mmm$-$mm$--$ee$-$}}'' to $\bm l$:  ``\texttt{femme}'' by removing duplicates and blanks. Note that the order of these operations is important; removing blanks first results in impossibility of mapping double characters.
+
+	 		Finally, CTC defines the probability of a given label \(\bm{l} \in L^{\leq T}\) conditioned on the input sequence \(\mathbf{x}\) as the sum of the probabilities of all output paths \(\pi\) that correspond to it:
+	 		\begin{align*}
+				p(\bm{l} | \bm{x}) &= \sum_{\pi:{\cal B}(\pi)=\bm{l}}p(\pi|\bm{x}), \\
+				p(\pi | \bm{x}) &= \prod_{t=1}^T \bm{y}_{\pi_t}^{t},
+				\label{eq:stringprob}
+			\end{align*}
+			where \(\bm{y}_{\pi_t}^{t}\) is the probability of observing label \(\pi_t\) at time \(t\), as outputted by the network.
+
+			Given the exponential number of possible sequences \(\pi\) corresponding to \(\bm l\), finding the most probable label \(h(\bm{x}) = \argmax_{\bm{l} \in L^{\leq T}} p(\bm{l} | \bm{x})\) for an input \(\bm x\) becomes intractable very quickly. Therefore, an approximation is made based on the assumption that the most probable path will correspond to the most probable labelling:\[
+				h(\bm{x}) \approx \mathcal{B}(\pi^*),~~ \text{where } \pi^* = \underset{\pi}{\argmax}~ p(\pi|\bm{x}).
+			\] Decoding in this way can be calculated either with the backward-forward algorithm, or greedily with beam search.
+
 
 
 	%----------------------------------------------------------------------------------------
