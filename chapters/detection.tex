@@ -13,7 +13,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	\begin{figure}
 		\includegraphics[width=0.85\linewidth]{fasterrcnn_diagram.pdf}
-		\caption[The \FRCNN{} architecture]{The \FRCNN{} architecture (credit to \cite{detection_benchmark}) \label{fig:faster_rcnn}}
+		\caption[The \FRCNN{} architecture]{The \FRCNN{} architecture \citep[credit to][]{detection_benchmark}
+		\label{fig:faster_rcnn}
+		}
 	\end{figure}
 
 	The task of object detection builds upon that of image classification since architectures based on region proposals (see \autoref{sec:related_detection}) can be seen as a two stage algorithm: the first part extracts possible object bounding boxes as a sub-image of the input, while the second one predicts the class associated with each candidate. It is of no surprise then that object detection greatly benefits from the super-human accuracy of deep neural networks \citep{superhuman_classif}. We chose to pair the \FRCNN{} detection architecture with the \RESNET{} feature extractor \citep{resnet}, since this has been proved to give a good trade-off between speed and detection accuracy on the standard challenge of ILSCVR \citep{detection_benchmark}. In what follows we present the main building blocks of this architecture.
@@ -32,7 +34,8 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\includegraphics[width=0.85\linewidth]{resnet_blue}
 			\caption[ResNet blocks]{
 				The left part represents a normal ResNet block which forces the network to learn the residual mapping \(\mathcal{F}(\ve{x}) := \mathcal{H}(\ve{x}) - \ve{x}\) through the skip connection shown in blue. The right part shows a ``bottleneck'' block used in \RESNET{}.
-				\citep{resnet}
+
+				\raggedleft{\citep[credit to][]{resnet}}
 				\label{fig:resnet}
 			}
 		\end{figure}
@@ -123,7 +126,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\begin{figure}
 			\begin{subfigure}[c]{.69\linewidth}
 				\includegraphics{ctpn_architecture}
-				\caption{Overview}\label{fig:ctpn_arch}
+				\caption{Overview \citep{ctpn}}\label{fig:ctpn_arch}
 			\end{subfigure}
 			\begin{subfigure}[c]{.30\linewidth}
 				\begin{subfigure}{\linewidth}
