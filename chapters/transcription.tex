@@ -21,63 +21,74 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 	%--INTRO --------------------------------------------------------------------------------
 
-		Text transcription has preoccupied researchers for a very long time. Therefore, a large amount of ideas have been tried in order to solve this problem, of which we mention a few in \autoref{sec:related_transcription}. One of the challenges of text resides its wide variation of appearance. For example, a free font website such as \url{http://www.1001fonts.com/} currently lists approximately 9500 different typefaces. Moreover, it is believed that each person has a completely unique handwriting, which is why this is still commonly used a signature. This highlights the importance of being able to represent images of text robustly, or, in other words, to extract good features that distinguish well among characters. As was previously stated, convolutional neural networks have proved very effective in this task time and again, so it is natural to use them as a first stage in a transcription architecture.
+		Text transcription has preoccupied researchers for a very long time. Therefore, a large amount of ideas have been tried in order to solve this problem, of which we mention a few in \autoref{sec:related_transcription}. One of the challenges of text resides in its wide variation of appearance. For example, a free font website such as \url{www.1001fonts.com/} currently lists approximately 9500 different typefaces. Moreover, it is believed that each person has a completely unique handwriting, which is why this is still commonly used a signature. This highlights the importance of being able to represent images of text robustly, or, in other words, to extract good features that distinguish well among characters. As was previously stated, convolutional neural networks have proved very effective in this task time and again, so it is natural to use them as a first stage in a transcription architecture.
 
 		Another peculiarity of text, which we have also mentioned in the detection chapter, is given by its sequential aspect. Few neural network architectures support arbitrarily-sized input. Of these, the recurrent neural network (RNN) has become a standard since it models well sequences of any type.
 
 		The Convolutional Recurrent Neural Network (\CRNN{}) architecture uses the two approaches above in a unified framework to transcribe text from natural images. Considering that it achieved state-of-the-art performance in such a challenging task, we believe it is suitable for our use case as well, which is why we focused most of our efforts in this direction. Next, we detail its inner workings as they are crucial in devising our experiments.
 
 
-		\begin{figure}\begin{tabular}{|c|c|}
+		\begin{figure}
+		\begin{subfigure}[c]{.48\linewidth}
+		\begin{flushleft}
+		\footnotesize
+		\begin{tabular}{|l|c|}
 			% \footnotesize
 			\hline
 			\textbf{Type} & \textbf{Configurations}						\tabularnewline	\hline
 																																				\hline
 			Transcription & - 																\tabularnewline	\hline
-			Bidirectional-LSTM & \#hidden units:256						\tabularnewline	\hline
-			Bidirectional-LSTM & \#hidden units:256						\tabularnewline	\hline
-			Map-to-Sequence & - 															\tabularnewline	\hline
-			BatchNormalization & - 														\tabularnewline	\hline
-			Convolution & \#maps:512, k:$2\times2$, s:1, p:0	\tabularnewline	\hline
-			MaxPooling & Window:$1\times2$, s:2								\tabularnewline	\hline
-			Convolution & \#maps:512, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
-			BatchNormalization & - 														\tabularnewline	\hline
-			Convolution & \#maps:512, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
-			MaxPooling & Window:$1\times2$, s:2 							\tabularnewline	\hline
-			Convolution & \#maps:256, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
-			BatchNormalization & - 														\tabularnewline	\hline
-			Convolution & \#maps:256, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
-			MaxPooling & Window:$2\times2$, s:2								\tabularnewline	\hline
-			Convolution & \#maps:128, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
-			MaxPooling & Window:$2\times2$, s:2 							\tabularnewline	\hline
-			Convolution & \#maps:64, k:$3\times3$, s:1, p:1		\tabularnewline	\hline
+			Bidir-LSTM & \#hidden units:256						\tabularnewline	\hline
+			Bidir-LSTM & \#hidden units:256						\tabularnewline	\hline
+			Map-to-Seq & - 															\tabularnewline	\hline
+			BatchNorm & - 														\tabularnewline	\hline
+			Conv (7) & \#maps:512, k:$2\times2$, s:1, p:0	\tabularnewline	\hline
+			MaxPool (4) & Window:$1\times2$, s:2								\tabularnewline	\hline
+			Conv (6) & \#maps:512, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
+			BatchNorm & - 														\tabularnewline	\hline
+			Conv (5) & \#maps:512, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
+			MaxPool (3) & Window:$1\times2$, s:2 							\tabularnewline	\hline
+			Conv (4) & \#maps:256, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
+			BatchNorm & - 														\tabularnewline	\hline
+			Conv (3) & \#maps:256, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
+			MaxPool (2) & Window:$2\times2$, s:2								\tabularnewline	\hline
+			Conv (2) & \#maps:128, k:$3\times3$, s:1, p:1	\tabularnewline	\hline
+			MaxPool (1) & Window:$2\times2$, s:2 							\tabularnewline	\hline
+			Conv (1) & \#maps:64, k:$3\times3$, s:1, p:1		\tabularnewline	\hline
 			Input & $W\times32$ gray-scale image 							\tabularnewline	\hline
 		\end{tabular}\par
-		\caption[\CRNN{} architecture]{\todo{Note different from paper}}\label{fig:crnn_architecture}
+		\caption[\CRNN{} structure]{\todo{Note different from paper, use tabu, split conv part separately }}\label{fig:crnn_architecture}
+		\end{flushleft}
+		\end{subfigure}
+		\begin{subfigure}[c]{.49\linewidth}
+			\includegraphics{crnn_rec_field}
+			\caption{Image encoding into sequence of features \citep[credit to][]{CRNN}}\label{fig:crnn_sequence}
+		\end{subfigure}
+		\caption{Convolutional Recurrent Neural Networks}
 		\end{figure}
 
 	%----------------------------------------------------------------------------------------
 	\subsection{Feature extraction}
 		The first part of the \CRNN{} architecture consists of a custom 7-layer CNN that transforms the input image into a sequence of high-level features. This is similar to well-known architectures, as it alternates convolutional and pooling layers (\autoref{fig:crnn_architecture}). A few particularities are important to be noted.
 
-		First, the input is pooled differently on the vertical dimension than on the horizontal one. For the former, 4 windows of height 2 are used. As a result, an input of height 32 becomes a feature map of height 2. In order to feed this to the RNN, the features on the same column are concatenated into a single vector. Then, the nework performs horizontal pooling only twice with a window of width 2. This ensures the receptive field does not become too wide and can still distinguish very narrow characters such as \{\texttt{l,i,1}\}. The network is fully convolutional, which allows inputs of any size to be processed. However, since the columns become features of the RNN, the height should be standardised. This design is well suited for images of text which are bounded vertically, but not horizontally.
+		First, the input is pooled differently on the vertical dimension than on the horizontal one. For the former, 4 layers with pooling windows of height 2 are used. As a result, an input of height 32 becomes a feature map of height 2. This is further reduced this to a \(\mathit{height} = 1\) feature by the last convolutional layer, which applies \(2 \times 2\) convolution with no padding. For the horizontal direction, the nework performs pooling only twice with a window of width 2. This ensures the receptive field does not become too wide and can still distinguish very narrow characters such as \{\texttt{l,i,1}\}. The network is fully convolutional, which allows inputs of any size to be processed. However, since the columns become features of the RNN, the height should be standardised. This design is well suited for images of text which are bounded vertically, but not horizontally.
 
-		Second, the network uses batch normalisation \citep{batch_norm}, which is standard practice in recent times since it improves the performance and the stability of the network. This works by replacing the activations \(\ve{H}\) of a layer with their normalised counterparts \(\ve{H}'\), which become input for the next layer: \[
+		Second, the network uses batch normalisation \citep{batch_norm}, which is standard practice in recent times since it improves the performance and the stability of the network. This works by replacing the activations \(\ve{H}\) of a layer with their normalised counterparts \(\ve{H}'\), which become the new inputs for the next layer: \[
 			\ve{H}' = \gamma \frac{\ve{H} - \ve{\mu}}{\ve{\sigma}} + \beta,
-		\]\footnote{\todo{make miu and sigma vectors}} where \(\mu\) is a vector of means of all neurons and \(\sigma\) a vector of their standard deviations. The learnable parameters \(\gamma\) and \(\beta\) ensure the network does not lose expressive power by allowing convergence towards any mean and standard deviation. Overall, this also means that the composition of the batches is important, as we will see shortly.
+		\]\footnote{\todo{make miu and sigma vectors}} where \(\mu\) is a vector of means of all neurons and \(\sigma\) a vector of their standard deviations. The learnable parameters \(\gamma\) and \(\beta\) ensure the network does not lose expressive power by allowing convergence towards any mean and standard deviation. Overall, using this technique means that the composition of the batches is important, as we will see shortly.
 
 		Finally, we use ReLU activations at each layer and bias terms for the convolution.
 
 		%........................................................................................
 		\subsubsection*{Input preprocessing}
 
-			Input images are resized to have a heigth of 32px, while keeping their aspect ratio. As a result, their widths are different which makes it difficult to construct batch tensors. Therefore, we also define a standard input width of 250px and make sure all training images are narrower than this in the interest of avoiding horizontal deformation. Images that are shorter than the necessary width are duplicated horizontally up to this length. As opposed to zero padding the shorter images, this mechanism keeps a similar distribution of pixels across all batches. Note this does not produce bad training examples as we keep track of the original length when aligning the predictions and the labels.
-
-\startToDo{}
+			Input images are resized to have a heigth of 32px, while keeping their aspect ratio. As a result, their widths are different which makes it difficult to construct batch tensors. Therefore, we also define a standard input width of 250px and make sure all training images are narrower than this in the interest of avoiding horizontal deformation. Images that are shorter than the necessary width are duplicated horizontally up to this size. As opposed to padding the shorter images with blank space, this concatenation mechanism keeps a similar distribution of pixels across all batches. Note this does not produce bad training examples because we keep track of the original length when aligning the predictions and the labels.
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{RNN decoder}
+		The CNN part of the architecture encoded horizontal portions of the image (of full height) into a sequence of high dimensional features, ordered left to right (\autoref{fig:crnn_sequence}). This sequence is then consumed by an RNN decoder in order to produce character representations.
+
 
 	%----------------------------------------------------------------------------------------
 
