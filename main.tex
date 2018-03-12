@@ -201,9 +201,11 @@
 
 
 %% These include the actual text
-\include{chapters/intro}
-\include{chapters/detection}
-\include{chapters/transcription}
+% using input instead of include because the latter puts some extra white pages at the end
+% TODO: investigate if these disappear after including appendix
+\input{chapters/intro}
+\input{chapters/detection}
+\input{chapters/transcription}
 
 \bibliography{refs}             % this causes the references to be listed
 \bibliographystyle{plainnat}       % see natbib for other possible values

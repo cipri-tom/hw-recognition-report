@@ -136,26 +136,39 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				\wer &= \frac{1}{N} \sum_i (1 - \delta (\mathit{prediction}_i, \mathit{groundTruth}_i)),
 			\end{aligned}
 			\]
-			where the \(\operatorname{dist}()\) function evaluates the \emph{un-normalised} edit distance and \(\delta\) outputs 1 if its arguments are the same, letter for letter, or 0 when they differ.
+			where the \(\operatorname{dist}()\) function evaluates the \emph{un-normalised} edit distance and \(\delta\) outputs 1 if its arguments are the same, letter for letter, or 0 when they differ. Note that, unless otherwise specified, we use the raw values, without discounting for placeholders in the ground truth. This results in minimal attainable error rates that are above zero. \todo{Give values}.
 
 	%----------------------------------------------------------------------------------------
 
 %========================================================================================
 
 \section{Experiments}\label{sec:transcription_experiments}
+	Considering the lack of real training data, we try to achieve our goal by the means of transfer learning: we will train our models on several different datasets and evaluate them on real data. The rest of the section presents step-by-step our experiments, describing for each of them the training data, the performance of the model and the identified weaknesses.
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Academic databases}
-		RIMES lines, words, words with spaces + IAM
+		At the very first phase, we validated that the architecture can learn and perform handwriting recognition by training on the already-discussed RIMES database. We trained and predicted using \emph{binarised} images of single words, hence the name \ds{Words} model \todo{Also specify non-binary model}. The model converged after seeing \(\approx 78\)k training examples to a validation \(\cer = 0.35\), but it did not generalise to our document, where \todo{\(\cer = what\)}. Since at first we did not use dropout, we next tried a model trained on the same dataset with dropout probability \(p_\mathit{drop} = 0.2\). It achieved similar performance on validation dataset, but it generalised better to real world data, achieving \(\cer = 6.5\). \todo{While this is far from being usable in practice, the small performance improvement demonstrates that transfer learning is a valid strategy, so we will continue to explore it.}
 
-		show examples, and numbers
+		\begin{figure}
+			\includegraphics[width=.49\linewidth]{crnn/word_model_3}
+			\includegraphics[width=.49\linewidth]{crnn/word_model_1}
+			\includegraphics[width=.49\linewidth]{crnn/word_model_2}
+			\includegraphics[width=.49\linewidth]{crnn/word_model_4}
+			\caption[Predictions of \ds{Words_bin} model]{The ground truth and the predictions are shown above the images (left and right, respectively). When there are few background elements, the prediction works reasonably well, with the exception of missing spaces.}
+			\label{fig:crnn_word_drop_model}
+		\end{figure}
 
-		Mention problems: writing style, different corpus (MAJ vs min vs ligatures + numbers, plates), lines
+		We note that in the examples where the model almost works (\autoref{fig:crnn_word_drop_model}) some of the errors come from the model not being able to predict spaces. This is expected since there are no examples of it in the training set, which contains only images of full words. We try to correct this by including images which contain multiple words. However, we cannot use full lines due to their wildly varying widths, which become a problem for making training batches. Moreover, our cutting algorithm from \autoref{sec:rimes_template} cannot always produce accurate (\texttt{image},\texttt{text}) pairs due to inconsistencies in ground truth data. Therefore, we choose to add those lines from the RIMES database which are narrower than the input width (250px). Given that there are only a few of them, approximately 1000 compared to 50\,000 words, we decide to also add similarly short lines from the IAM handwriting database \citep{iam}, which adds appoximately 2500 examples. With these, together with the words images, we train a new model which again achieves a similarly good performance on its validation dataset. Surprisingly though, it performs much worse on the statements, with a \(\cer = 11.3\). We believe this is due to the additional English corpus from the IAM database which confuses the language model of the LSTM. %\todo{actually check word_short_model_bin and not word_short_model. There could be a huge difference}.
+
+		\subsubsection*{Outcome}
+		In general we validated through many small experiments that it is possible to learn to transcribe handwriting from our corpus by training on a different one. However, the exact composition of the training corpus should be similar to the one of the \ds{Test} dataset at many different levels. The pixel distribution has an important role (gray versus binary), as does the writing style and the content.
+
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Generator}
+		Mention problems: writing style, different corpus (MAJ vs min vs ligatures + numbers, plates), lines
 
 		mention the success in OCR
 
