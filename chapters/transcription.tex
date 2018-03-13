@@ -238,7 +238,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 			Equipped with the powerful tool above, we generate a corpus of size similar to RIMES (50\,000 training examples, \ds{Gen_50k}) using a selection of 25 handwriting-style fonts (examples in \autoref{fig:generated_images}). This converged to a validation \CER{4.6} after seeing, interestingly, the same amount of training examples as RIMES-trained model (\(\approx 750\)k). We noticed that further training for about twice as long brings improvements to the validation word error rate (\(\approx -3.5\%\)) while the CER remains constant. This suggests that the LSTM picks up further subtleties in the language model. However, the results on \ds{Test} were slightly worse that previous best, at \CER{67.31}. Evaluating this model on RIMES data exposes a key observation: it does not generalise there, either, having \CER{75.8}. While we actually wanted this data to be different, we expected it to be an extension to RIMES dataset. Seeing it is not, we trained a model on both of them (\ds{Gen_50K_RIM}) which achieved a new low, with \CER{45.78}.
 
 			\urldef{\vLetter}\url{https://www.vletter.com/help/about-vletter.html}
-			We hypothesised that the sub-par performance of the generated data was due to small variation of fonts when compared to human handwriting. Therefore, we went on to create a database of 900 real and cursive fonts, each being a customised version of a real person's handwriting \footnote{\vLetter}. The model trained on this, \ds{Gen_800f} is better than the initial generated-only one. However, it still does not caputre all natural features of handwriting, performing slightly worse than \ds{Gen_50k_RIM}. Increasing the dataset size to 1 million examples (\ds{Gen_1M}) further approaches the mixed data model. Surprisingly, doubling the input resolution proves counterproductive (\ds{Gen_1M_64}).
+			We hypothesised that the sub-par performance of the generated data was due to the small variation of fonts compared to human handwriting. Therefore, we created a database of 900 cursive fonts, each being a customised version of a real person's handwriting\footnote{\vLetter}; 100 of them were kept for validation. The model trained on this, \ds{Gen_800f} is better than the initial one of generated-only data (\ds{Gen_50k}). However, it still does not caputre all natural features of handwriting, performing slightly worse than \ds{Gen_50k_RIM}. Increasing the dataset size to 1 million examples (\ds{Gen_1M}) further approaches the mixed data model. Surprisingly, doubling the input resolution proves counterproductive (\ds{Gen_1M_64}).
 
 		%........................................................................................
 		\subsubsection*{Outcome}
@@ -255,9 +255,29 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 					\hline
 				\end{tabular}
 				\caption[Generated datasets results]{Performance of models trained on different versions of generated datasets.}
+				\label{tab:transcription_generated}
 			\end{table}
 
-		results:  closer, but not enough doesn't know if it's a date or a number so D, 0, O.
+			\begin{figure}
+				\setkeys{Gin}{width=.3\linewidth}
+				\includegraphics[valign=c]{crnn/gen_model_2}\hspace{5mm}
+				\includegraphics[valign=c]{crnn/gen_model_1}\hspace{5mm}
+				\includegraphics[valign=c]{crnn/gen_model_3}
+				\caption[Understandably wrong predictions]{A model trained on \ds{Gen_1M} makes wrong predictions on \ds{Test} dataset. However, examining them character by character, we realise they are not so off from what is shown in the image. For example, in the middle image the ``\texttt{0}'' is taken for an ``\texttt{O}'', the ``\texttt{1}'' really resembles ``\texttt{A}'', ``\texttt{/}'' character does look like a slanted ``\texttt{1}'' and the final ``\texttt{13}'' is undistinguishable from ``\texttt{B}''.
+				}\label{fig:transcription_wrong}
+			\end{figure}
+
+			The series of experiments proved it is possible to learn relevant handwriting features and compensate for a small and uniform dataset (\autoref{tab:transcription_generated}).  However, significantly more data is needed to cover for the differences between natural and synthetic handwriting, in our case by a factor of 20. A mixed dataset seems to cover the best of both worlds, achieving the best performane at \CER{45.78}.
+
+			Given that the results are still of no practical use, we inspected in more detail the generated data and the models' predictions. Looking at some examples in \autoref{fig:transcription_wrong}, we see that individual glyphs in the image actually correspond well to what the model predicts. The problem is that we, as humans, choose to interpret the whole differently than the concatenation of its parts. At the same time, parts derive their meaning from that of the whole. For example, glyphs that look like slanted bars are considered ones when grouped with another digit, but slashes when separating groups of digits, since we assume that the latter represents a date.
+
+	%----------------------------------------------------------------------------------------
+
+	\subsection{Corpus type}
+		strategy 1: precondition the hidden state, like Karpathy
+		Not working because not enough information. They were embedding a very rich feature into the space of the hidden state, whereas we merely ``tickle'' the hiddent state
+
+		Strategy 2: add extra feature at all time steps
 
 				% \ds{Gen_corpus_1} & 47.94 & 40.75 & 40.44 & 81.82\\
 				% \ds{Gen_corpus_all} & 49.07 & 40.55 & 40.25 & 82.11\\
@@ -267,13 +287,6 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				% \ds{Gen_elastic_3} & 42.20 & 36.92 & 36.64 & 81.68\\
 				% \ds{Gen_elastic_4} & 45.29 & 40.16 & 39.89 & 83.41\\
 
-	%----------------------------------------------------------------------------------------
-
-	\subsection{Corpus type}
-		strategy 1: precondition the hidden state, like Karpathy
-		Not working because not enough information. They were embedding a very rich feature into the space of the hidden state, whereas we merely ``tickle'' the hiddent state
-
-		Strategy 2: add extra feature at all time steps
 
 %========================================================================================
 
