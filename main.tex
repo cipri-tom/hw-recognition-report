@@ -15,7 +15,10 @@
 \usepackage{url}            % typeset URL's sensibly
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
-\usepackage{tabu}
+% \usepackage{tabu}
+\usepackage{array}
+
+\usepackage{layouts} % allows you to print lengths
 
 % set line space nicely (only for text, not captions etc)
 \usepackage{setspace}
@@ -65,9 +68,11 @@
 \DeclareMathOperator*{\argmin}{argmin} % * means the argument in _{} is placed below rather than to the right
 \DeclareMathOperator{\argmax}{argmax} % * means the argument in _{} is placed below rather than to the right
 \DeclareMathOperator{\iou}{IoU}
+\DeclareMathOperator{\AP}{\operatorname{AP}_{\iou > 0.5}}
 \DeclareMathOperator{\cer}{CER}
 \DeclareMathOperator{\wer}{WER}
-\DeclareMathOperator{\AP}{\operatorname{AP}_{\iou > 0.5}}
+\providecommand{\CER}[1]{\( \operatorname{CER} = #1\% \)}
+\providecommand{\WER}[1]{\( \operatorname{WER} = #1\% \)}
 \providecommand{\norm}[1]{\lVert#1\rVert} % unlike \newcommand, this does nothing if \norm already exists
 \providecommand{\card}[1]{\left\vert#1\right\vert}
 % \DeclarePairedDelimiter\norm{\lVert}{\rVert}
@@ -96,7 +101,7 @@
 
 \usepackage[compatibility=false]{caption}
 \usepackage{subcaption}
-\usepackage{floatrow}       % automatically centers floats
+% \usepackage{floatrow}       % automatically centers floats
   % \subref -> '(a)' rather than just 'a'
   \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
   \renewcommand\thesubfigure{(\alph{subfigure})}
@@ -204,7 +209,7 @@
 % using input instead of include because the latter puts some extra white pages at the end
 % TODO: investigate if these disappear after including appendix
 \input{chapters/intro}
-\input{chapters/detection}
+% \input{chapters/detection}
 \input{chapters/transcription}
 
 \bibliography{refs}             % this causes the references to be listed
