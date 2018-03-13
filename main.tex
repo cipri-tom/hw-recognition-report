@@ -15,8 +15,10 @@
 \usepackage{url}            % typeset URL's sensibly
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
+
 % \usepackage{tabu}
 \usepackage{array}
+
 
 \usepackage{layouts} % allows you to print lengths
 
@@ -96,12 +98,16 @@
 \usepackage{graphicx}
   \graphicspath{{./images/}}
   \setkeys{Gin}{width=\linewidth} % set \includegraphics default width
+  \makeatletter
+    \let\ginnatwidth\Gin@nat@width
+    \let\ginnatheight\Gin@nat@height
+  \makeatother
   \usepackage[export]{adjustbox} % used to align some images with the text between them (valign=c)
 %----------------------------------------------------------------------------------------
 
 \usepackage[compatibility=false]{caption}
 \usepackage{subcaption}
-% \usepackage{floatrow}       % automatically centers floats
+\usepackage{floatrow}       % automatically centers floats
   % \subref -> '(a)' rather than just 'a'
   \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
   \renewcommand\thesubfigure{(\alph{subfigure})}
