@@ -150,7 +150,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Academic databases}
-		At the very first phase, we validated that the architecture can learn and perform handwriting recognition by training on the already-discussed RIMES database. We trained and predicted using images of single words, hence the name \ds{Word} model. This converged after seeing \(\approx 780\)k training examples to a \emph{validation} \CER{8.29},	but it did not work on our documents, where \CER{115}. We realised again the importance of pixel values, so we re-trained on \emph{binarised} words, which performed similarly on validation dataset, but had a great improvement on \ds{Test}, with \CER{61.8}. Adding dropout with probability \(p_\mathit{drop} = 0.2\) further lowers the CER by 2\%. Therefore, all further models will use this dropout rate.
+		At the very first phase, we validated that the architecture can learn and perform handwriting recognition by training on the already-discussed RIMES database. We trained and predicted using images of single words, hence the name \ds{Word} model. This converged after seeing \(\approx 780\)k training examples to a \emph{validation} \CER{8.29},	but it did not work on our documents, where \CER{115}. We realised again the importance of pixel values, so we re-trained on \emph{binarised} words (\ds{Word_bin} model), which performed similarly on validation dataset, but had a great improvement on \ds{Test}, with \CER{61.8}. Adding dropout with probability \(p_\mathit{drop} = 0.2\) further lowers the CER by 2\% (\ds{Word_bin_drop} model).
 
 		\begin{figure}
 			\includegraphics[width=.49\linewidth]{crnn/word_model_3}
@@ -161,17 +161,30 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 			\label{fig:crnn_word_drop_model}
 		\end{figure}
 
-		While this is far from being usable in practice, the performance improvements demonstrate that transfer learning is a valid strategy, so we continue to explore it. We note that in the examples where the model almost works (\autoref{fig:crnn_word_drop_model}) some of the errors come from the model not being able to predict spaces. This is expected since there are no examples of it in the training set, which contains only images of full words. We try to correct this by including images which contain multiple words. However, we cannot use full lines due to their wildly varying widths, which become a problem for making training batches. Moreover, our cutting algorithm from \autoref{sec:rimes_template} cannot always produce accurate (\texttt{image},\texttt{text}) pairs due to inconsistencies in ground truth data. Therefore, we choose to add those lines from the RIMES database which are narrower than the input width (250px). Given that there are only a few of them, approximately 1000 compared to 50\,000 words, we decide to also add similarly short lines from the IAM handwriting database \citep{iam}, which adds appoximately 2500 examples. With these, together with the words images, we train a new model which again achieves a similarly good performance on its validation dataset. Surprisingly though, it performs much worse on the statements, with a \CER{104}. We believe this is due to the additional English corpus from the IAM database which confuses the language model of the LSTM.
+		We note that in the examples where the model almost works (\autoref{fig:crnn_word_drop_model}) some of the errors come from the model not being able to predict spaces. This is expected since there are no examples of it in the training set, which contains only images of full words. We try to correct this by including images of multiple words and spaces. However, we cannot use full lines due to their wildly varying widths, which become a problem for making training batches. Moreover, our cutting algorithm from \autoref{sec:rimes_template} cannot always produce accurate (\texttt{image},\texttt{text}) pairs due to inconsistencies in ground truth data. Therefore, we choose to add those lines from the RIMES database which are narrower than the input width (250px). Given that there are only a few of them, approximately 1000 compared to 50\,000 words, we decide to also add similarly short lines from the IAM handwriting database \citep{iam}, which adds appoximately 2500 examples. With these, together with the words images, we train a new model (\ds{Word_short_IAM}) which again achieves a similarly good performance on its validation dataset. Surprisingly though, it performs much worse on the statements, with a \CER{104}. We believe this is due to the additional English corpus from the IAM database which confuses the language model of the LSTM.
 
 		\subsubsection*{Outcome}
-		In general, we validated through many small experiments that it is possible to learn to transcribe handwriting from our corpus by training on a different one. However, the exact composition of the training corpus should be similar to the one of the \ds{Test} dataset at many different levels. First, the pixel distribution has an important role (gray versus binary). Then, the content is important too: we observe a consistent difference between strict and lowercase-only matching (\autoref{tab:transcription_academic}), meaning the model has trouble differentiating the case of words. Finally, the language and the writing style are crucial for the models, since those trained on RIMES+IAM are less stable during training and converge to impractical solutions.
+		The experiments on academic corpora revealed several key differences between them and the target dataset. One consists of the influence of pixel values (gray vs binary) and of background elements (\autoref{fig:crnn_dashes}), which increases validation CER from 17\% to 37\%. Another is given by the style of the handwriting: the one in RIMES database is mostly cursive, whereas IAM and the statements have more ``printscript'' style (using block letters). Then, the content is important too: we observe a consistent difference between strict and lowercase-only matching (\autoref{tab:transcription_academic}), meaning the model has trouble differentiating the case of words. Finally, we observe the great importance of the language model. Besides the problems introduced by using an English corpus, the continuous, gramatically-correct sentences in the RIMES database precondition the LSTM in a way that does not apply to the statements, whose fields are mostly names, addresses and numbers.
+
+		In general, we validated through many small experiments that it is possible to learn to transcribe handwriting from our corpus by training on a different one. While the results so far are cannot be used in practice, the performance improvements demonstrate that transfer learning is a valid strategy, so we continue to explore it. In addition, we validate the results of \citet{MDLSTM_dropout}, showing that dropout consistently improves the performance. Therefore, all further models will use it, with \(p_\mathit{drop} = 0.2\).
+
+		\begin{figure}
+			\includegraphics[width=.32\linewidth]{crnn/short_ok_1}
+			\includegraphics[width=.32\linewidth]{crnn/short_ok_2}
+			\includegraphics[width=.32\linewidth]{crnn/short_ok_3}
+			\includegraphics[width=.32\linewidth]{crnn/short_dash_1}
+			\includegraphics[width=.32\linewidth]{crnn/short_dash_2}
+			\includegraphics[width=.32\linewidth]{crnn/short_dash_3}
+			\caption[Influence of backgrond elements]{The same model \ds{Word_bin_drop} was evaluated on clean images from RIMES (top) and their variants with added indicator line (bottom). This simple perturbation increases the error rate by \(20\%\). }
+			\label{fig:crnn_dashes}
+		\end{figure}
 
 		\begin{table}
 			\centering
 			\begin{tabular}{| l | *{4}{c |}}\hline
 				\textbf{Dataset name} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\\hline
 				\ds{Word} & 115.52 & 109.98 & 109.83 & 98.28\\
-				\ds{Word_bin} & 61.43 & 58.44 & 58.43 & 94.25\\
+				\ds{Word_bin} & 62.43 & 59.44 & 59.43 & 94.25\\
 				\ds{Word_bin_drop} & 60.58 & 57.71 & 57.71 & 94.83\\
 				\ds{Word_short_IAM} & 104.19 & 100.24 & 100.15 & 98.78\\
 				% \ds{Word_short} & 103.70 & 100.97 & 100.74 & 98.71\\
@@ -184,6 +197,10 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Generator}
+
+
+
+
 		Mention problems: writing style, different corpus (MAJ vs min vs ligatures + numbers, plates), lines
 
 		mention the success in OCR
