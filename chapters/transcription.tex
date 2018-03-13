@@ -200,7 +200,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 	\subsection{Generator}\label{sec:generator}
 
-		%... Description ..............................................................................
+		%... Description ........................................................................
 			Inspired by the state-of-the-art achievements in OCR with synthetic data \citep{synthetic_data}, we try to address the limitations of the academic databases using a similar approach. Specifically, we adapt the code released by aforementioned authors to better suit our task by bringing the following improvements:
 			\begin{description}
 				\item[jiggle letters] Humans rarely have pixel-accurate alignment of their handwriting; likewise for the horizontal distribution of letters. Therefore, we randomly jiggle letters side-ways as well as up and down.
@@ -274,6 +274,33 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 	%----------------------------------------------------------------------------------------
 
 	\subsection{Corpus type}
+
+		%... Description ........................................................................
+			\urldef{\ICDAR}\url{http://u-pat.org/ICDAR2017/program_competitions.php}
+			Based on the above observations, we try to address the shortcomings of the architecture. Specifically, we believe the LSTM language model suffers from the wild differences in the format of data, e.g.\ dates versus names. To the best of our knowledge, no good results have been published on such highly heterogeneous data. For example, the old problem of MNIST handwriting recognition is only concerned with digits, possibly arranged into strings. Additionally, the documents in ICDAR handwriting recognition competitions\footnote{\ICDAR} contain text from archaic documents, i.e.\ normal language. Therefore, we try to split the challenge into smaller, more homogeneous sub-problems. However, instead of doing this manually, we will only provide information about the type of corpus that a given text belongs to and let the architecture learn and switch between different formats.
+
+			To accomplish the above, we group the data into logical corpora which represent their type, or context. For the final pipeline, we envision that the assignment of text to a given corpus happens at detection time, where its location on the page can provide strong hints in this regard. Therefore, the categories are as follows:
+			\begin{description}
+				\item[Person names\vspace{-1.5em}]
+
+				\item[Numbers] These are mostly phone numbers, but include, in general, any string of digits. We note that in real data some of these can also contain one or two characters, as they represent the ID of the contract.
+
+				\item[Dates] These can come under a variety of formats, such as \texttt{27/04/03} and \texttt{22 Mar 2013}, with many possible delimiters. We group them all into the same category.
+
+				\item[Hours] Similar to the dates, there are many possible formats for these as well.
+
+				\item[Addresses] An address usually comprises of several parts: number, street, post code and city. In the statements, these are usually split in groups of two, over two lines. As such, address format usually follows a strict rule: \texttt{<digits>, <letters and spaces>}.
+
+				\item[License plates] These come in two formats which, unfortunately, are very different from one another: the new one is \texttt{AA 111 AA}, while the old one is \texttt{1111 AAA 11}.
+
+				\item[Observations] This can include any natural language observations, makes and models of cars, country names, etc.
+			\end{description}
+			Although the formats are still not completely separated, most of them are well defined and have to be chosen from a smaller pool.
+
+		%........................................................................................
+		\subsubsection*{Strategy 1: preconditioning the LSTM}
+
+
 		strategy 1: precondition the hidden state, like Karpathy
 		Not working because not enough information. They were embedding a very rich feature into the space of the hidden state, whereas we merely ``tickle'' the hiddent state
 
