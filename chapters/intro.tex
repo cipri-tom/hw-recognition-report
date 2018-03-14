@@ -1,47 +1,44 @@
 %!TEX root = ../main.tex
-% Chapter 1
+\chapter{Introduction}\label{ch:intro}
 
-\chapter{Introduction} % Main chapter title
+This report supports the associated master project for handwriting recognition in difficult business documents. It presents a detailed view of our research and describes the steps we took to implement a working system. In addition, it grounds the problem in the existing body of work and motivates our choices with respect to various obstacles.
 
-\label{ch:intro}
+The rest of the chapter presents the context of the task, including motivation, challenges, related work and the goals we have set. \Autoref{ch:detection} is dedicated to the text detection part, presenting two different architectures and several experiments. Then, \autoref{ch:transcription} presents the second, and more difficult problem of text transcription from the images. We give a detailed analysis of important factors, which is supported by another large series of investigations. Each of the two parts also has a section dedicated to evaluation of the approach. Finally, we conclude with \autoref{ch:conclusions} by listing our achievements and future work.
 
-%----------------------------------------------------------------------------------------
-
-Say we are only concerned with *offline* recognition. use this to explain : % http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=367882 and this R. Plamondon and S. N. Srihari.  On-line and off-line handwriting recognition: a comprehensive survey. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2000
-
-
-
-Structure of the project, etc
-
-\todo{All names are fake, generated}
 
 \section{Motivation}
-AXA needs to process approximately 200,000 accident statements per year. This is a very slow process, etc etc
+At AXA, approximately 200\,000 accident statements need to be processed every year. But before any of these can be underwritten, human operators need to confirm them with the clients and register them in a database by transcribing the important information. This is a very slow process that requires precious human time before any value can be created for either the client or the company. As such, it would be of great help if the labour-intensive part could be automated and people could focus on more important tasks.
 
-List some requirements. These are loosely specified, therefore the project has a broad scope.
+Given that a digital copy of all past statements has been kept for archival purposes, the task is to utilise them for speeding up the processing of future ones. This is, without a doubt, a very broad requirement, especially since in general only a few fields on the form are crucial for the company, while the others are needed mostly for the details of the accident and have to be confirmed by phone with the client. However, keeping the task broad adds a useful challenge to the project by ensuring a larger scope and utility.
 
 \section{Challenges}\label{sec:challenges}
-Given the loose requirements above, the scope of the project was set to be an exploratory one, to investigate the capabilities of the state of the art approaches in text recognition, and to adapt them to our needs. We want to extract as much data as possible from the statements, while keeping a general and flexible approach that can be applied to different formats and, later on, to different types of documents.
+% Say we are only concerned with *offline* recognition. use this to explain : % http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=367882 and this R. Plamondon and S. N. Srihari.  On-line and off-line handwriting recognition: a comprehensive survey. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2000
+
+Given the loose requirements above, the scope of the project was set to be an exploratory one, to investigate the capabilities of the state of the art approaches in \emph{offline} text recognition, and to adapt them to our needs. We want to extract as much data as possible from the statements, while keeping a general and flexible approach that can be applied to different formats and, later on, to different types of documents. Offline recognition means we have only the final image of the text, as opposed to the online case where the path of the pen is sampled during writing. The offline version is notoriously more difficult since the time order of the path is lost.
 
 During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
 
-\todo{
-% http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf
-This has some examples of `exceptional' images for OCR systems. These kind of difficulties are the normal images for us (show examples)
-}
+% \todo{
+% % http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf
+% This has some examples of `exceptional' images for OCR systems. These kind of difficulties are the normal images for us (show examples)
+% }
 %----------------------------------------------------------------------------------------
 
+% ToDo: why footnote with ``a'' ?
 \subsection{Format}
-	Standard OCR and HWR tools (Tesseract, Transkribus) do not work well (\autoref{fig:standard_tools}) on our problem. We believe this is due to:
+	\urldef{\transkribus}\url{https://transkribus.eu/Transkribus/}
+	\begin{figure}
+		\includegraphics[height=.9\textheight]{transkribus_blur}
+		\caption[Transkribus page segmentation]{The highlighted boxes correspond to locations of text according to a standard tool for handwriting transcription. Note we have blurred some lines \emph{after} the detection to preserve anonymity.}\label{fig:standard_tools}
+	\end{figure}
+	Standard OCR and HWR tools (Tesseract, Transkribus\footnote{\transkribus}) do not work well on our problem (\autoref{fig:standard_tools}). We believe this is due to:
 
 	\begin{description}
-		% \item the irregular format
 		\item[the irregular format] Both tools expect text to be in a well structured format: words grouped into lines, lines grouped into paragraphs that span either the full page or are grouped into columns. In general, they can deal with local irregularities, such as a picture or quote which interrupts the normal flow. However, none of these groupings appear in our documents.
 
-		% \item a mix of styles
 		\item[a mix of styles] OCR tools expect to have only printed text and treat everything else as an image. Conversely, HWR tools expect to have only handwritten text, and treat everything else as background or noise. As such, the heuristics for text line detection and segmentation fail on both types of tools, due to the presence of the other type of text.
 
-		\item[Constraints] \todo{unconstrained recognition (no lexicon)}
+		\item[Constraints] Such tools usually assume various constraints about the text. For example Tesseract needs to know the language of the text in advance. This does not apply in our case, as most of the text is unconstrained: dates, numbers, addresses, names. These do now follow the structure of a language.
 	\end{description}
 
 	We can note, however, that the statements \emph{do} subscribe to a certain, albeit non-standard, format. Text entry zones are indicated by a line, preceded with the name of the field in the language of the country. These are logically grouped into categories such as Policyholder, Vehicle, Insurance company etc., and each category has a unique identifying number (in the upper left corner). The personal information of the two persons is separated on the left and right sides by a set of checkboxes which describe the accident conditions.
@@ -56,19 +53,32 @@ This has some examples of `exceptional' images for OCR systems. These kind of di
 
 	During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan (\autoref{fig:difficult_examples}). Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
 
-	However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The actors completing such an accident statement are free to:
-	% TODO: remove whitespce before this list
+	However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The persons completing such an accident statement are free to:
 	\begin{description}
 		\item[choose the format of the input data] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
 
-		% TODO: find a better word for "actors"
 		% TODO: show pictures
-		\item[use the available space to their pleasing] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, actors ignore labels and literally overwrite them \todo{show example}.
+		\item[use the available space to their pleasing] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, people ignore labels and literally overwrite them.
 
-		\item[use their natural handwriting] \label{itm:natural_handwriting} This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:different_handwriting}, one person's \texttt{r} looks exactly the same as another person's \texttt{v}, and only the context helps us infer the word.
+		\item[use their natural handwriting] \label{itm:natural_handwriting} This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:context}, one person's \texttt{1} looks exactly the same as another person's \texttt{A}, and only the context helps us infer the word.
 
-		\item[use any vocabulary they consider suitable] This often results in non-standard abbreviations or partial words (\autoref{fig:oov_words}).
+		\item[use any vocabulary they consider suitable] This often results in non-standard abbreviations or partial words (\autoref{fig:abbrev}).
 	\end{description}
+
+	\begin{figure}
+		\begin{subfigure}[b]{.5\linewidth}
+			\centering
+			\includegraphics[width=.75\linewidth]{context}\\
+			\includegraphics[width=.75\linewidth]{context2}
+			\caption{}\label{fig:context}
+		\end{subfigure}
+		\begin{subfigure}[b]{.48\linewidth}
+			\includegraphics{abbrev}
+			\caption{}\label{fig:abbrev}
+		\end{subfigure}
+		\caption[Ambiguity in handwriting]{In \subref{fig:context}, the highlighted glyphs are highly ambigous either because they look like something else (top image: \(\mathtt{1} \rightarrow \mathtt{A}, \mathtt{13} \rightarrow \mathtt{B} \)) or because they look like no discernible character on their own (bottom).\\
+		In \subref{fig:abbrev}, we see people use custom abbreviations (``AB'') and write beyond the indicated box}
+	\end{figure}
 
 
 %========================================================================================
@@ -115,10 +125,16 @@ This has some examples of `exceptional' images for OCR systems. These kind of di
 %========================================================================================
 
 
-\section{Decisions}
+\section{Objectives}
 
-	Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}.
+	Given the constraints imposed by our data and the weaknesses of classical approaches for HWR, we realise that our task is to find a robust way of identifying and transcribing handwritten text outside of a text context, which is also known as recognition of \emph{text in the wild}. To this end, we envision as end goal a system that can:
+	\begin{enumerate}
+	 	\item locate with good precision handwritten text in a document, and
+	 	\item transcribe it, ideally with near human performance.
+	\end{enumerate}
+	We realise, however, that this may be an over optimistic goal, especially that we have no labelled data.
 
+	It is important to note that matching text to its label in order to give structured information is beyond the scope of the current work, partly because we view it as a less challenging task and partly because it is of no use without having the above system first.
 
 
 
