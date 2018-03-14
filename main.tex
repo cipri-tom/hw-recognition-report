@@ -124,14 +124,14 @@
   \captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 
   % include the short description into the long one
-  \makeatletter
-  \let\x@caption\caption % original \caption
-  \def\x@@caption[#1]#2{\x@caption[{#1}]{#1 --- #2}} % with optional arg
-  \def\x@@@caption#1{\x@caption[{#1}]{#1}} % without optional arg
-  \AtBeginDocument{%
-      \def\caption{\@ifnextchar[\x@@caption\x@@@caption} % new \caption
-  }
-  \makeatother
+  % \makeatletter
+  % \let\x@caption\caption % original \caption
+  % \def\x@@caption[#1]#2{\x@caption[{#1}]{#1 --- #2}} % with optional arg
+  % \def\x@@@caption#1{\x@caption[{#1}]{#1}} % without optional arg
+  % \AtBeginDocument{%
+  %     \def\caption{\@ifnextchar[\x@@caption\x@@@caption} % new \caption
+  % }
+  % \makeatother
 
 
 %----------------------------------------------------------------------------------------
@@ -210,8 +210,9 @@
 % using input instead of include because the latter puts some extra white pages at the end
 % TODO: investigate if these disappear after including appendix
 \input{chapters/intro}
-% \input{chapters/detection}
-% \input{chapters/transcription}
+\input{chapters/detection}
+\input{chapters/transcription}
+\input{chapters/conclusions}
 
 \bibliography{refs}             % this causes the references to be listed
 \bibliographystyle{plainnat}       % see natbib for other possible values
