@@ -90,7 +90,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 		The CNN part of the architecture encoded horizontal portions of the image (of full height) into a sequence of high dimensional features, ordered left to right (\autoref{fig:crnn_sequence}). This sequence is then consumed by an RNN decoder in order to produce character representations. To avoid the problem of vanishing gradients in long sequences, the LSTM version is employed \citep{LSTM_original} which uses a combination of gates to control the flow of information inside the cell. By default, an LSTM cell can only use past context in addition to the current input. In our case, future context can be very helpful, so a bi-directional variant of LSTM is used. 	Moreover, using a stack of two such layers allows us to capture more complex contextual dependencies.
 
 		%........................................................................................
-		\subsubsection*{Connectionist Temporal Classification}
+		\subsubsection*{Connectionist Temporal Classification}\label{sec:CTC}
 
 			Training RNNs normally requires ground truth labels at each time step. We can see this is problematic in our context, since we only know the final sequence and not how it is aligned to the input image. Moreover, some features in the sequence can correspond to space between the characters, so there is no ground truth for them.
 
@@ -263,7 +263,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				\includegraphics[valign=c]{crnn/gen_model_2}\hspace{5mm}
 				\includegraphics[valign=c]{crnn/gen_model_1}\hspace{5mm}
 				\includegraphics[valign=c]{crnn/gen_model_3}
-				\caption[Understandably wrong predictions]{A model trained on \ds{Gen_1M} makes wrong predictions on \ds{Test} dataset. However, examining them character by character, we realise they are not so off from what is shown in the image. For example, in the middle image the ``\texttt{0}'' is taken for an ``\texttt{O}'', the ``\texttt{1}'' really resembles ``\texttt{A}'', ``\texttt{/}'' character does look like a slanted ``\texttt{1}'' and the final ``\texttt{13}'' is undistinguishable from ``\texttt{B}''.
+				\caption[Understandably wrong predictions (1)]{A model trained on \ds{Gen_1M} makes wrong predictions on \ds{Test} dataset. However, examining them character by character, we realise they are not so off from what is shown in the image. For example, in the middle image the ``\texttt{0}'' is taken for an ``\texttt{O}'', the ``\texttt{1}'' really resembles ``\texttt{A}'', ``\texttt{/}'' character does look like a slanted ``\texttt{1}'' and the final ``\texttt{13}'' is undistinguishable from ``\texttt{B}''.
 				}\label{fig:transcription_wrong}
 			\end{figure}
 
@@ -277,21 +277,21 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 		%... Description ........................................................................
 			\urldef{\ICDAR}\url{http://u-pat.org/ICDAR2017/program_competitions.php}
-			Based on the above observations, we try to address the shortcomings of the architecture. Specifically, we believe the LSTM language model suffers from the wild differences in the format of data, e.g.\ dates versus names. To the best of our knowledge, no good results have been published on such highly heterogeneous data. For example, the old problem of MNIST handwriting recognition is only concerned with digits, possibly arranged into strings. Additionally, the documents in ICDAR handwriting recognition competitions\footnote{\ICDAR} contain text from archaic documents, i.e.\ normal language. Therefore, we try to split the challenge into smaller, more homogeneous sub-problems. However, instead of doing this manually, we will only provide information about the type of corpus that a given text belongs to and let the architecture learn and switch between different formats.
+			Based on the above observations, we try to address the shortcomings of the architecture. Specifically, we believe the LSTM language model suffers from the wild differences in the format of data, e.g.\ dates versus names. To the best of our knowledge, no good results have been published on such highly heterogeneous data. For example, the old problem of MNIST handwriting recognition is only concerned with digits, possibly arranged into strings. Additionally, the documents in ICDAR handwriting recognition competitions\footnote{\ICDAR} contain text from archaic documents which presents complex glyphs but still use normal language. Therefore, we try to split the challenge into smaller, more homogeneous sub-problems. However, instead of doing this manually, we will only provide information about the type of corpus that a given text belongs to and let the architecture learn and switch between different formats.
 
 			To accomplish the above, we group the data into logical corpora which represent their type, or context. For the final pipeline, we envision that the assignment of text to a given corpus happens at detection time, where its location on the page can provide strong hints in this regard. Therefore, the categories are as follows:
 			\begin{description}
 				\item[Person names\vspace{-1.5em}]
 
-				\item[Numbers] These are mostly phone numbers, but include, in general, any string of digits. We note that in real data some of these can also contain one or two characters, as they represent the ID of the contract.
+				\item[Numbers] These are mostly phone numbers, but include, in general, any string of digits. We note that in real data some of these can also contain one or two characters, as they represent the contract ID.
 
 				\item[Dates] These can come under a variety of formats, such as \texttt{27/04/03} and \texttt{22 Mar 2013}, with many possible delimiters. We group them all into the same category.
 
-				\item[Hours] Similar to the dates, there are many possible formats for these as well.
+				\item[Hours] Similarly to dates, there are many possible formats for these as well.
 
-				\item[Addresses] An address usually comprises of several parts: number, street, post code and city. In the statements, these are usually split in groups of two, over two lines. As such, address format usually follows a strict rule: \texttt{<digits>, <letters and spaces>}.
+				\item[Addresses] An address usually comprises of several parts: number, street, post code and city. In the statements, these are usually split in groups of two, over two lines. As such, address format usually follows a strict rule: ``\texttt{<digits>, <letters and spaces>}''.
 
-				\item[License plates] These come in two formats which, unfortunately, are very different from one another: the new one is \texttt{AA 111 AA}, while the old one is \texttt{1111 AAA 11}.
+				\item[License plates] These come in two formats which, unfortunately, are very different from one another: the new one is ``\texttt{AA 111 AA}'', while the old one is ``\texttt{1111 AAA 11}''.
 
 				\item[Observations] This can include any natural language observations, makes and models of cars, country names, etc.
 			\end{description}
@@ -299,21 +299,57 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 		%........................................................................................
 		\subsubsection*{Strategy 1: preconditioning the LSTM}
+			A body of work that is similar to our task was done in the area of image captioning. Most architectures there are also made up from a CNN feature extractor and an RNN language model, but the exact implementation details can have large influences on the result. For a first trial, we follow the implementation of \citet{lstm_precondition}, who precondition the LSTM by setting its hidden state to an encoding of the last convolutional feature map. Then they input and predict word vectors.
+
+			We use a similar approach for providing the corpus information alongside the image features. We encode corpus class into an indicator vector \(\mathbbm{1}(c = 1) \in \{0, 1\}^F\), where \(F\) is the LSTM input size and \(c\) the unique integer ID of the corpus\footnote{This encoding scheme is also known as \emph{one-hot} encoding, in a vector of size \(F\)}. We use this as the first item in the features sequence, thus providing the same hidden state initialisation for all images belonging to the same corpus.
+
+			We generate a new dataset as above, this time also keeping its origin information as corpus ID. A model trained on this, \ds{Gen_corpus_pre}, comes close to previous best, at \CER{47.94}. However, it does not improve on it. We believe there are two reasons behind this: first, the corpus feature vector is mostly filled with zeros when projected in image space, since there are just 7 different corpora and \(F = 512\) image features; second, our sequences are two to three times longer than those in image captioning, and not even the LSTM architecture can keep context for so long.
+
+		%........................................................................................
+		\subsubsection*{Strategy 2: add extra features}
+			To overcome the problem of a very long sequence, we add the corpus information as extra features to the LSTM input, at all time steps. This is encoded as before, in an indicator vector \(\mathbbm{1}(c = 1) \in \{0,1\}^7\) (now only of necessary width), and is concatenated to the image features \(\mathcal{F}_t\) of each time step in the sequence\footnote{\todo{Use concatenation operator}}:\[
+				\mathcal{F}'_t = \mathcal{F}_t \circ \mathbbm{1}(c = 1).
+			\]
+
+			Since the previous dataset already contains corpus information, we reuse it for training a new model with this configuration, \ds{Gen_corpus_all}. It achieves a new best, at \CER{41.76}. We observe it correctly learns formats of corpora, such as always predicting long numbers in groups of two digits, despite the ground truth being without white space.
 
 
-		strategy 1: precondition the hidden state, like Karpathy
-		Not working because not enough information. They were embedding a very rich feature into the space of the hidden state, whereas we merely ``tickle'' the hiddent state
+		%........................................................................................
+		\subsubsection*{Outcome}
+			\begin{table}
+				\centering
+				\begin{tabular}{| l | *{4}{c |}}\hline
+					\textbf{Dataset name} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\\hline
+					(Best generated) & 46.06 & 39.85 & 39.55 & 83.62\\
+					\ds{Gen_corpus_pre} & 47.94 & 40.75 & 40.44 & 81.82\\
+					\ds{Gen_corpus_all} & 41.76 & 37.03 & 36.70 & 81.11\\
+					\hline
+				\end{tabular}
+				\caption[Corpora information results]{Performance of a \CRNN{} model trained on a generated dataset of 1 million examples which include information about corpus of origin.}\label{tab:transcription_corpus}
+			\end{table}
 
-		Strategy 2: add extra feature at all time steps
+			Our hypothesis about the heterogeneity of data was validated and we sucessfully decrease it by bringing extra information into the architecture. However, the exact implementation makes a big difference, since the sequences we feed into the LSTM can be very long.
 
-				% \ds{Gen_corpus_1} & 47.94 & 40.75 & 40.44 & 81.82\\
-				% \ds{Gen_corpus_all} & 49.07 & 40.55 & 40.25 & 82.11\\
-				% \ds{Gen_corpus_all*} & 41.76 & 37.03 & 36.70 & 81.11\\
+			\begin{figure}
+				\begin{subfigure}[b]{.3\linewidth}
+					\includegraphics{crnn/cor_model_2}
+					\caption{}\label{fig:cor_model_2}
+				\end{subfigure}
+				\begin{subfigure}[b]{.3\linewidth}
+					\includegraphics{crnn/cor_model_1}
+					\caption{}\label{fig:cor_model_1}
+				\end{subfigure}
+				\begin{subfigure}[b]{.3\linewidth}
+					\includegraphics{crnn/cor_model_3}
+					\caption{}\label{fig:cor_model_3}
+				\end{subfigure}
+				\caption[Understandably wrong predictions (2)]{A model trained with knowledge about the type of text it sees understands better the format of different strings, e.g.\ in \subref{fig:cor_model_3} it completes the second dot by itself. However, it still strugles to make sensible choices, like in the case of \subref{fig:cor_model_2}. There, the second digit coult be taken for a ``\texttt{6}'', if it were on its own; but seeing the first glyph is an actual ``\texttt{6}'' gives us an indication that the second cannot be the same thing.}\label{fig:corpus_wrong}
+			\end{figure}
+			We again inspect in detail the type of mistakes that the model is making (\autoref{fig:corpus_wrong}) and observe that these are mostly related to the path that the model finds through the activations matrix. Specifically, the approximation in \autoref{sec:CTC} makes it predict the character of maximum activation. For example, for the last digit in \autoref{fig:cor_model_3} is an unusual ``\texttt{2}'' that \emph{does} have a part looking like a regular ``\texttt{9}''; this part probably overlaps maximally with the model's representation of ``\texttt{9}'' and that is what the model predicts.
 				% \ds{Gen_elastic_1} & 45.14 & 38.59 & 38.30 & 83.33\\
 				% \ds{Gen_elastic_2} & 43.97 & 38.95 & 38.70 & 82.90\\
 				% \ds{Gen_elastic_3} & 42.20 & 36.92 & 36.64 & 81.68\\
 				% \ds{Gen_elastic_4} & 45.29 & 40.16 & 39.89 & 83.41\\
-
 
 %========================================================================================
 
