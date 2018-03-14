@@ -368,14 +368,14 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 		%........................................................................................
 		\subsubsection*{Datasets and outcome}
-			We enhanced the generator from \autoref{sec:generator} to include this type of deformations as well, and, as before, we produced a dataset of 1 million examples, with corpus information included, \ds{Gen_elastic}. We observed from the start a much better performance on the validation dataset, compared to the previous best model, \ds{Gen_corpus_all} (\autoref{fig:elastic_cer_drop}). However, this does not readily transfer to the \ds{Test} dataset, as it attains a \mbox{\CER{42.2}} that is close to the one before. Moreover, we let this model train for much longer than any previous ones and observe that although its \emph{validation} performance remains stable, at a given point it starts to perform worse on \ds{Test}. It is important to note that this type of overfit cannot be detected during training since we do not validate on \ds{Test}. Therefore, the model is picking up very subtle features which differentiate generated data from real one, although for us both look the same.
+			We enhanced the generator from \autoref{sec:generator} to include this type of deformations as well, and, as before, we produced a dataset of 1 million examples, with corpus information included, \ds{Gen_elastic}. We observed from the start a much better performance on the validation dataset, compared to the previous best model, \ds{Gen_corpus_all} (\autoref{fig:elastic_cer_drop}). However, this does not readily transfer to the \ds{Test} dataset, as it attains a \mbox{\CER{42.2}} that is close to the one before. Moreover, we let this model train for much longer than any previous ones and observe that although its \emph{validation} performance remains stable, at a given point it starts to perform worse on \ds{Test}(\autoref{tab:elastic_corpus}). It is important to note that this type of overfit cannot be detected during training since we do not validate on \ds{Test}. Therefore, the model is picking up very subtle features which differentiate generated data from real one, although for us both look the same.
 
 			\begin{figure}
 				\includegraphics{crnn/elastic_drop}
 				\caption[Improvements of elastic deformations]{The curves show the training evolution of validation CER and accuracy \mbox{(\(= 1 - \wer\))} of the best models with (blue) and without (orange) elastic deformations.}\label{fig:elastic_cer_drop}
 			\end{figure}
 
-				\begin{table}
+			\begin{table}
 				\centering
 				\begin{tabular}{| l | *{5}{c |}}\hline
 					\textbf{Dataset name} & \textbf{epochs} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\\hline
@@ -386,17 +386,52 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 					(Best ``with-corpus'')& 31 & 41.76 & 37.03 & 36.70 & 81.11\\\hline
 				\end{tabular}
 				\caption[Elastic deformation results]{Performances obtained when training on a corpus with elastic deformations included, at different training times.
-				}\label{tab:transcription_corpus}
+				}\label{tab:elastic_corpus}
 			\end{table}
 
 
 %========================================================================================
 
 \section{Results}\label{sec:transcription_results}
+	\begin{table}
+		\centering
+		\begin{tabular}{| l | *{4}{c |}}\hline
+			\textbf{Dataset name} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\
+			\hline
+			\ds{Word} & 115.52 & 109.98 & 109.83 & 98.28\\
+			\ds{Word_bin} & 62.43 & 59.44 & 59.43 &\bf 94.25\\
+			\ds{Word_bin_drop} &\bf 60.58 &\bf 57.71 &\bf 57.71 & 94.83\\
+			\ds{Word_short_IAM} & 104.19 & 100.24 & 100.15 & 98.78\\
+			% \ds{Word_short} & 103.70 & 100.97 & 100.74 & 98.71\\
+			\ds{Word_short_drop} & 103.77 & 100.36 & 100.17 & 97.70\\
+			\hline
 
-		Show a table of each approach and the corresponding CER, and call it a day :)
+			\ds{Gen_50k} & 67.31 & 63.67 & 63.44 & 93.82\\
+			\ds{Gen_50k_RIM} & 45.78 & 42.06 & 42.13 & 85.78\\
+			\ds{Gen_800f} & 49.02 & 43.98 & 43.66 & 86.21\\
+			\ds{Gen_1M} &\bf 46.06 &\bf 39.85 &\bf 39.55 &\bf 83.62\\
+			\ds{Gen_1M_64} & 50.24 & 43.29 & 42.97 & 85.06\\
+			\hline
 
-	Say OCR is more suitable for synthetic, b/c a huge database of fonts blabla
+			\ds{Gen_corpus_pre} & 47.94 & 40.75 & 40.44 & 81.82\\
+			\rowcolor{LightGreen}
+			\ds{Gen_corpus_all} &\bf 41.76 &\bf 37.03 &\bf 36.70 &\bf 81.11\\
+			\hline
 
-\stopToDo{}
+			\ds{Gen_elastic_1} & 45.14 & 38.59 & 38.30 & 83.33\\
+			\ds{Gen_elastic_2} & 43.97 & 38.95 & 38.70 & 82.90\\
+			\ds{Gen_elastic_3} &\bf 42.20 &\bf 36.92 &\bf 36.64 &\bf 81.68\\
+			\ds{Gen_elastic_4} & 45.29 & 40.16 & 39.89 & 83.41\\
+			\hline
+		\end{tabular}
+		\caption[All transcription results]{Performances of different models. \textbf{Bold} entries are the best in their category, while the \colorbox{LightGreen}{highlighted} entry is the best overall.
+		}\label{tab:transcription_results}
+	\end{table}
+
+
+	% corpus_all and elastic_3 are very close for lower
+
+	We summarise the results of our experiments in \autoref{tab:transcription_results}. We see that large amounts of generated data overcome the limitations of a uniform dataset such as RIMES and that adding contextual information such as corpus type helps the architecture build better language models. However, the generated data does not bring benefits as big as it does in OCR and printed text recognition. We believe this is expected due to a number of reasons. First, printed text is usually put on a hard support; therefore all images of such text represent just an affine transformation of the original. This is in contrast to handwritten text which presents many subtle variations at stroke level. Then, text in the wild usually comprises words and language; with a little effort we can generate all such possible instances. In contrast, our task has to cope with almost infinite combinations of digits and letters. Finally, fonts used for printed text have little ambiguity, in general; apart from \{\texttt{i,1,l}\}, all glyphs are intentionally very different from one another. However, in handwritting, the same glyph can correspond to different characters and only context can solve the ambiguity.
+
+	We also observe that the architecture overfits to generated data, despite the large number of fonts and the elastic deformations. This, again, makes the task easier for printed text, where a large font database can reproduce all instances of printed text.
 
