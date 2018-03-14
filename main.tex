@@ -111,37 +111,29 @@
 \usepackage[compatibility=false]{caption}
 \usepackage{subcaption}
 \usepackage{floatrow}       % automatically centers floats
+  \newcommand{\rulesep}{\unskip\ \vrule\ } % allows to draw vertical line between figures
+
   % \subref -> '(a)' rather than just 'a'
   \captionsetup[subfigure]{subrefformat=simple,labelformat=simple}
   \renewcommand\thesubfigure{(\alph{subfigure})}
   \makeatletter
   \renewcommand\p@subfigure{\thefigure~}
   \makeatother
+
   % make the caption a bit shorter than the rest of the text, with bold font for label
   \captionsetup{margin=10pt,labelfont=bf,indention=.5cm}
 
-  \newcommand{\rulesep}{\unskip\ \vrule\ } % allows to draw vertical line between figures
-  % \makeatletter
-  % \let\x@caption\caption % original \caption
-  % \def\x@@caption[#1]#2{\x@caption[{#1}]{#1 --- #2}} % with optional arg
-  % \def\x@@@caption#1{\x@caption[{#1}]{#1}} % without optional arg
-  % \def\caption{\@ifnextchar[\x@@caption\x@@@caption} % new \caption
-  % \makeatother
+  % include the short description into the long one
+  \makeatletter
+  \let\x@caption\caption % original \caption
+  \def\x@@caption[#1]#2{\x@caption[{#1}]{#1 --- #2}} % with optional arg
+  \def\x@@@caption#1{\x@caption[{#1}]{#1}} % without optional arg
+  \AtBeginDocument{%
+      \def\caption{\@ifnextchar[\x@@caption\x@@@caption} % new \caption
+  }
+  \makeatother
 
-  % try to include the short caption title in the long one
-  % it doesn't work https://tex.stackexchange.com/questions/127921/
-  % \usepackage{xpatch}
-  % \tracingpatches
-  % \makeatletter
-  % \patchcmd{\@caption}{#3}{#2~--~#3}{}{}
-  % \makeatother
 
-  % \@caption=\long macro:
-  % #1[#2]#3->\par \addcontentsline {\csname ext@#1\endcsname }{#1}{\protect \numbe
-  % rline {\csname the#1\endcsname }{\ignorespaces #2}}\begingroup \@parboxrestore
-  % \if@minipage \@setminipage \fi \normalsize \@makecaption {\csname fnum@#1\endcs
-  % name }{\ignorespaces #3}\par \endgroup .
-  % <recently read> \@caption
 %----------------------------------------------------------------------------------------
 
 
@@ -218,8 +210,8 @@
 % using input instead of include because the latter puts some extra white pages at the end
 % TODO: investigate if these disappear after including appendix
 \input{chapters/intro}
-\input{chapters/detection}
-\input{chapters/transcription}
+% \input{chapters/detection}
+% \input{chapters/transcription}
 
 \bibliography{refs}             % this causes the references to be listed
 \bibliographystyle{plainnat}       % see natbib for other possible values
