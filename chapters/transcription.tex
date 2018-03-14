@@ -246,13 +246,12 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				\centering
 				\begin{tabular}{| l | *{4}{c |}}\hline
 					\textbf{Dataset name} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\\hline
-					(Best RIMES) & 60.58 & 57.71 & 57.71 & 94.83\\
 					\ds{Gen_50k} & 67.31 & 63.67 & 63.44 & 93.82\\
 					\ds{Gen_50k_RIM} & 45.78 & 42.06 & 42.13 & 85.78\\
 					\ds{Gen_800f} & 49.02 & 43.98 & 43.66 & 86.21\\
 					\ds{Gen_1M} & 46.06 & 39.85 & 39.55 & 83.62\\
-					\ds{Gen_1M_64} & 50.24 & 43.29 & 42.97 & 85.06\\
-					\hline
+					\ds{Gen_1M_64} & 50.24 & 43.29 & 42.97 & 85.06\\\hline
+					(Best RIMES) & 60.58 & 57.71 & 57.71 & 94.83\\\hline
 				\end{tabular}
 				\caption[Generated datasets results]{Performance of models trained on different versions of generated datasets.}
 				\label{tab:transcription_generated}
@@ -320,10 +319,9 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				\centering
 				\begin{tabular}{| l | *{4}{c |}}\hline
 					\textbf{Dataset name} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\\hline
-					(Best generated) & 46.06 & 39.85 & 39.55 & 83.62\\
 					\ds{Gen_corpus_pre} & 47.94 & 40.75 & 40.44 & 81.82\\
-					\ds{Gen_corpus_all} & 41.76 & 37.03 & 36.70 & 81.11\\
-					\hline
+					\ds{Gen_corpus_all} & 41.76 & 37.03 & 36.70 & 81.11\\\hline
+					(Best generated) & 46.06 & 39.85 & 39.55 & 83.62\\\hline
 				\end{tabular}
 				\caption[Corpora information results]{Performance of a \CRNN{} model trained on a generated dataset of 1 million examples which include information about corpus of origin.}\label{tab:transcription_corpus}
 			\end{table}
@@ -346,15 +344,51 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				\caption[Understandably wrong predictions (2)]{A model trained with knowledge about the type of text it sees understands better the format of different strings, e.g.\ in \subref{fig:cor_model_3} it completes the second dot by itself. However, it still strugles to make sensible choices, like in the case of \subref{fig:cor_model_2}. There, the second digit coult be taken for a ``\texttt{6}'', if it were on its own; but seeing the first glyph is an actual ``\texttt{6}'' gives us an indication that the second cannot be the same thing.}\label{fig:corpus_wrong}
 			\end{figure}
 			We again inspect in detail the type of mistakes that the model is making (\autoref{fig:corpus_wrong}) and observe that these are mostly related to the path that the model finds through the activations matrix. Specifically, the approximation in \autoref{sec:CTC} makes it predict the character of maximum activation. For example, for the last digit in \autoref{fig:cor_model_3} is an unusual ``\texttt{2}'' that \emph{does} have a part looking like a regular ``\texttt{9}''; this part probably overlaps maximally with the model's representation of ``\texttt{9}'' and that is what the model predicts.
-				% \ds{Gen_elastic_1} & 45.14 & 38.59 & 38.30 & 83.33\\
-				% \ds{Gen_elastic_2} & 43.97 & 38.95 & 38.70 & 82.90\\
-				% \ds{Gen_elastic_3} & 42.20 & 36.92 & 36.64 & 81.68\\
-				% \ds{Gen_elastic_4} & 45.29 & 40.16 & 39.89 & 83.41\\
 
-%========================================================================================
+	%----------------------------------------------------------------------------------------
 
-\section{Attention-based architecture}\label{sec:attention}
-	biiig TODO
+	\subsection{Elastic deformations}
+		%... Description ........................................................................
+			Despite using over 800 realistic handwriting fonts for generating data, and affine transformations on top such as slanting and skewing, we observed even the best models still do not capture all the variation in natural handwriting. This pointed us to the advice of \citet{elastic_distortions}, who describe a method of data augmentation for handwritten digits. Specifically, they propose using random displacement fields \(\Delta \ve{x}, \Delta \ve{y} \in \operatorname{rand}(-1,1)\) which correspond to uncontrolled oscillations of the hand muscles, dampened by inertia. These are then used as parameters of an interpolation for sampling in the original image. However, using the purely random values results in a noisy distortion of the image. This can be accommodated by first convolving the fields \(\Delta \ve{x}, \Delta \ve{y}\) with a Gaussian kernel of standard deviation \(\sigma\), which becomes the elastic coefficient. Seeing that small values of sigma produce too much deviation (\autoref{fig:elastic_4}), we select sigma from a normal distribution \(\mathcal{N}(8, 2)\), but threshold it at values bigger than 5. Another important parameter is \(\alpha\) which controls the displacement amount. While the authors recommend a hard value of \(\alpha=34\), we found this to be dependent on the image size. Therefore, we empirically determined a good relation to be \(\alpha = 1.5 \times H\), where \(H\) is the height of the image.
+			\begin{figure}
+				\begin{subfigure}[t]{.32\linewidth}
+					\includegraphics{crnn/elastic}
+					\caption{Original image}\label{fig:elastic_0}
+				\end{subfigure}
+				\begin{subfigure}[t]{.32\linewidth}
+					\includegraphics{crnn/elastic4}
+					\caption{\(\sigma = 4\)}\label{fig:elastic_4}
+				\end{subfigure}
+				\begin{subfigure}[t]{.32\linewidth}
+					\includegraphics{crnn/elastic8}
+					\caption{\(\sigma = 8\)}\label{fig:elastic_8}
+				\end{subfigure}
+				\caption[Elastic deformations]{Examples of influence of the elastic coefficient \(\sigma\)}
+			\end{figure}
+
+		%........................................................................................
+		\subsubsection*{Datasets and outcome}
+			We enhanced the generator from \autoref{sec:generator} to include this type of deformations as well, and, as before, we produced a dataset of 1 million examples, with corpus information included, \ds{Gen_elastic}. We observed from the start a much better performance on the validation dataset, compared to the previous best model, \ds{Gen_corpus_all} (\autoref{fig:elastic_cer_drop}). However, this does not readily transfer to the \ds{Test} dataset, as it attains a \mbox{\CER{42.2}} that is close to the one before. Moreover, we let this model train for much longer than any previous ones and observe that although its \emph{validation} performance remains stable, at a given point it starts to perform worse on \ds{Test}. It is important to note that this type of overfit cannot be detected during training since we do not validate on \ds{Test}. Therefore, the model is picking up very subtle features which differentiate generated data from real one, although for us both look the same.
+
+			\begin{figure}
+				\includegraphics{crnn/elastic_drop}
+				\caption[Improvements of elastic deformations]{The curves show the training evolution of validation CER and accuracy \mbox{(\(= 1 - \wer\))} of the best models with (blue) and without (orange) elastic deformations.}\label{fig:elastic_cer_drop}
+			\end{figure}
+
+				\begin{table}
+				\centering
+				\begin{tabular}{| l | *{5}{c |}}\hline
+					\textbf{Dataset name} & \textbf{epochs} & \textbf{CER strict} & \textbf{CER lower} & \textbf{CER ascii} & \textbf{WER}\\\hline
+					\ds{Gen_elastic_1}    &  8 & 45.14 & 38.59 & 38.30 & 83.33\\
+					\ds{Gen_elastic_2}    & 18 & 43.97 & 38.95 & 38.70 & 82.90\\
+					\ds{Gen_elastic_3}    & 31 & 42.20 & 36.92 & 36.64 & 81.68\\
+					\ds{Gen_elastic_4}    & 48 & 45.29 & 40.16 & 39.89 & 83.41\\\hline
+					(Best ``with-corpus'')& 31 & 41.76 & 37.03 & 36.70 & 81.11\\\hline
+				\end{tabular}
+				\caption[Elastic deformation results]{Performances obtained when training on a corpus with elastic deformations included, at different training times.
+				}\label{tab:transcription_corpus}
+			\end{table}
+
 
 %========================================================================================
 
