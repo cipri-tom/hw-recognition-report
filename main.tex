@@ -195,24 +195,30 @@
 
 \renewcommand{\bibname}{References} % Bibliografy -> References
 
+
 \begin{document}
+\pagenumbering{roman}
 
 \input{chapters/title}
 \input{chapters/abstract}
-% \input{chapters/thanks}
-
 \tableofcontents
-\listoffigures
-% \listoftables
 
+\input{chapters/thanks}
+
+
+\listoffigures
+\listoftables
+
+\clearpage
+\pagenumbering{arabic}
 
 %% These include the actual text
 % using input instead of include because the latter puts some extra white pages at the end
 % TODO: investigate if these disappear after including appendix
-% \input{chapters/intro}
-% \input{chapters/detection}
-% \input{chapters/transcription}
-% \input{chapters/conclusions}
+\input{chapters/intro}
+\input{chapters/detection}
+\input{chapters/transcription}
+\input{chapters/conclusions}
 
 \bibliography{refs}             % this causes the references to be listed
 \bibliographystyle{plainnat}       % see natbib for other possible values
