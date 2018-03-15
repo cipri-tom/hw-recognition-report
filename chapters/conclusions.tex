@@ -1,19 +1,28 @@
 %!TEX root = ../main.tex
 
 \chapter{Conclusions}\label{ch:conclusions}
-This chapter concludes our work and this report by summarising the achievements and listing possible tasks for future work.
+This chapter concludes our work and this report by giving an overview of the achievements, including end-to-end results, and listing possible tasks for future work.
 
 \section{Achievements}
-In \autoref{sec:detection_results} we have analysed in-depth the results of various detection models. We proved that \FRCNN{} is able to learn handwriting specific features and it can use them to detect handwritten text reasonably well. For our model, the confidence score of the detected boxes is less helpful for selecting high quality ones, but this is a \emph{small} problem since false negatives can be filtered at a later time. Alternatively, it is likely that fine tuning on a subset of \ds{Test} would aid the model to better distinguish between real text and text-like examples. Finally, we have seen that \CTPN{} is superior to most \FRCNN{} models, but the evaluation protocol we chose fails to capture this in numbers.
+In \autoref{sec:detection_results} we have analysed in-depth the results of various detection models. We proved that \FRCNN{} is able to learn handwriting-specific features and it can use them to detect handwritten text reasonably well. For our model, the confidence score of the detected boxes is less helpful for selecting high quality ones, but this is a \emph{small} problem since false positives can be filtered out at a later time. Alternatively, it is likely that fine tuning on a subset of \ds{Test} would aid the model to better distinguish between real text and text-like examples. Finally, we have seen that \CTPN{} is superior to most \FRCNN{} models, but the evaluation protocol we chose fails to capture this in numbers.
 
-In a similar manner, \autoref{sec:transcription_results} proves that we found sensible alternatives to compensate for the lack of annotated data, but also that generated handwriting does not completely capture the features of real one. Our experiments identified several weaknesses of these approaches, and solved them one by one. On a different note, we tried to explore the maximum capabilities of the current transcription system by fine-tuning the best model on a subset of \ds{Test} dataset. Using 800 boxes for training and 600 for testing, we managed to improve the performance up to \todo{CER}. Unfortunately, we do not have a human level error rate to compare to. Also, it is unclear whether more training data would be beneficial or a more powerful architecture is needed for further improvements.
+In a similar manner, \autoref{sec:transcription_results} proves that we found sensible alternatives to compensate for the lack of annotated data, but also that generated handwriting does not capture all the features of the real one. Our experiments identified several weaknesses of these approaches, and solved them one by one.
 
-With a candidate for each of the parts, we can now evaluate the final performance of our system, in a goal-directed fashion. Pairing the best text transcription model, \ds{Gen_corpus_all}, with any of the detection models should objectively show which one is best, while also proving the capabilities achieved so far. Therefore, the \FRCNN{} model trained on \ds{Template_gen} achieves a \todo{CER = }. This is computed only on boxes which correspond to a ground truth, with the corpus type of the ground truth. Similarly, \CTPN{} model trained on the same dataset achieves \todo{CER}. This is higher than \FRCNN{}, but with the caveat discussed in \autoref{sec:ctpn_results}: some correct detections are merged in a single line, therefore are not counted.
+\section{End-to-end results}
+With a candidate for each of the parts, we can now evaluate the final performance of our system, in a goal-directed fashion\footnote{The corpus type of a detection needed for the transcription module is that of the corresponding ground truth box.}. Pairing the best text transcription model, \ds{Gen_corpus_all}, with any of the detection models should objectively show which one is best, while also proving the capabilities achieved so far. Results are shown in \autoref{tab:e2e_results}. We see the \FRCNN{} model outperforms the \CTPN{} one but we have to re-state the caveat discussed in \autoref{sec:ctpn_results}: some correct \CTPN{} detections are merged into a single line thus being wrongly discarded due to low \(\iou\).
 
-In conclusion, we developed an acceptable handwriting detection system and we set the proof of concept for the transcription one. Each can benefit from additional improvements before being ready to work together in a highly robust fashion.
+\begin{table}\begin{tabular}{| l | *3{c |}}\hline
+	\bf Model     & \bf CER & \bf WER & \(\mathbf{R}_{\iou = 0.5}\)\\\hline
+	Best \FRCNN{} & 52.38   & 91.27   & 71\\
+	Best \CTPN{}  & 53.73   & 90.87   & 54\\\hline
+\end{tabular}
+\caption{End-to-end results}\label{tab:e2e_results}
+\end{table}
+
+In conclusion, we developed a good handwriting detection system and we made major advances for the transcription one, establishing it into a proof of concept. The final results show that each can benefit from additional improvements before being ready to work together in a highly robust fashion.
 
 \section{Future work}
 There are many different paths to explore for any of the parts. For detection, we would like to investigate the influence of feature extractors, as well as training them from scratch. For the transcription part, we would like to test with much bigger generated datasets, with the mention that they should include more variation as well, i.e.\ a bigger vocabulary for the natural language corpus. Additionally, we could also test a deeper feature extractor here as well.
 
-We would also like to point out the high similarity between the \CTPN{} (detection) and \CRNN{} (transcription) connectionist mechanisms. This suggests that an end-to-end architecture is feasabile and we would like to test this too.
+We would also like to point out the high similarity of LSTM mechanisms in \CTPN{} (detection) and \CRNN{} (transcription). This suggests that an end-to-end implementation is feasabile, which is why we plan it as well for future work.
 
