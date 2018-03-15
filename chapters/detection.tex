@@ -45,7 +45,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\subsection{Region proposal network}\label{sec:frcnn_rpn}
 		In order to bring the inference speed closer to real-time, \FRCNN{} improves on the bottleneck of previous approaches, namely the proposal of object candidates. Instead of relying on highly-engineered low-level features of super-pixels, the architecture reuses the convolutional feature map generated for the region classification step.
 
-		This is achieved through another small, fully-convolutional network which is slided along the final layer of the feature map. The window at each location is projected into a lower dimensional feature that is used to predict \(k\) region bounds as well as \(k\) ``objectness'' scores. Each predicted region \(k_i\) is encoded as 4 coordinates \(\ve{t}_i = (x, y, w, h)_i\) that define the bounding box \emph{relative} to a set of predefined boxes called \emph{anchors}. This mechanism allows the detection of multiple scales and aspect ratios in one pass through the network, thus avoiding the need of image pyramids and further reducing the computational cost.
+		This is achieved through another small, fully-convolutional network which is slid along the final layer of the feature map. The window at each location is projected into a lower dimensional feature that is used to predict \(k\) region bounds as well as \(k\) ``objectness'' scores. Each predicted region \(k_i\) is encoded as 4 coordinates \(\ve{t}_i = (x, y, w, h)_i\) that define the bounding box \emph{relative} to a set of predefined boxes called \emph{anchors}. This mechanism allows the detection of multiple scales and aspect ratios in one pass through the network, thus avoiding the need of image pyramids and further reducing the computational cost.
 
 		For training the RPN, the following loss function has to be minimised:
 		\begin{equation*}\label{eq:rpn_loss}
@@ -55,7 +55,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		\end{equation*}
 		\(\ve{p}_i\) represents the probability that anchor \(i\) is an object; \(\ve{p}^{*}_i\) is the label of this anchor (\(1\) when it significantly overlaps a ground truth box) and \(\ve{t}_i, \ve{t}^{*}_i\) encode the anchor's and ground truth's coordinates, respectively.
 
-		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyperparameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground truth box with an Intersection-over-Union (\(\iou\)) ratio above threshold \(\tau_+ = 0.7\).
+		The loss jointly minimised  the ``objectness'' classification term \(L_{\cls}\) for an anchor \(i\) in the minibatch and the bounding box regression term \(L_{\reg}\); the two are balanced by the hyper-parameter \(\lambda\). The regression term is only taken into account for positive anchors (\(p^{*}_i = 1\)), which are those overlapping a ground truth box with an Intersection-over-Union (\(\iou\)) ratio above threshold \(\tau_+ = 0.7\).
 
 	%----------------------------------------------------------------------------------------
 
@@ -87,7 +87,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 			\item[negative IoU threshold (\(\tau_{-} = 0.3\))] Similar to \(\tau_{+}\), but for marking candidates as negative examples.
 
-			\item[NMS confidence threshold (\(\mathit{value} = 0.0\))] When a candidate has a low confidence score, we can supress it from contributing to the loss. We effectively disable this filter because we want to force the network to give high-confidence predictions, therefore it should learn from all examples.
+			\item[NMS confidence threshold (\(\mathit{value} = 0.0\))] When a candidate has a low confidence score, we can suppress it from contributing to the loss. We effectively disable this filter because we want to force the network to give high-confidence predictions, therefore it should learn from all examples.
 
 			\item[NMS IoU threshold (\(\tau_{\textsc{nms}} = 0.7\))] When several proposals overlap each other, we should keep only one of them in the batch in order to increase proposal's diversity. This parameter controls when we can consider that a proposal is redundant to another one, in terms of their overlap.
 
@@ -101,12 +101,12 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 \section{Connectionist Text Proposal Network}\label{sec:ctpn}
 	% http://i.cs.hku.hk/~kykwong/publications/wliu_bmvc16.pdf This has a good simple explanation of ResNet and LSTM and what-not
 
-	Once we established the feasability of object detection techniques for our task via \FRCNN{}, we searched for improvements that could increase the quality of the detections. The rest of the section presents an extension to the previous architecture based on the work of \citet{CRNN} which is designed specifically for text detection.
+	Once we established the feasibility of object detection techniques for our task via \FRCNN{}, we searched for improvements that could increase the quality of the detections. The rest of the section presents an extension to the previous architecture based on the work of \citet{CRNN} which is designed specifically for text detection.
 
 	%----------------------------------------------------------------------------------------
 
 	\subsection{RPN becomes CTPN}
-		The main novelty of \FRCNN{} consisted of generating object candidates with a fast additional network based on a set of anchors which are combined in different scales and aspect ratios. This work builds on the observation that text does not have a closed boundary since it is composed of a sequence of letters and strokes. As such, a text ``object'' can have arbitrary width, which is difficult to accomodate with the standard anchor mechanism. The algorithm would need anchors of many different aspect ratios and even so, it would still be difficult to completely detect a line that is much longer than any of the ones in the training set.
+		The main novelty of \FRCNN{} consisted of generating object candidates with a fast additional network based on a set of anchors which are combined in different scales and aspect ratios. This work builds on the observation that text does not have a closed boundary since it is composed of a sequence of letters and strokes. As such, a text ``object'' can have arbitrary width, which is difficult to accommodate with the standard anchor mechanism. The algorithm would need anchors of many different aspect ratios and even so, it would still be difficult to completely detect a line that is much longer than any of the ones in the training set.
 
 		The \CTPN{} architecture proposes an ingenious solution: break down text objects into a series of adjacent boxes of constant-width and similar height; consequently, learn to predict a series of anchors that respect the same constraints, called \emph{fine-scale} proposals (\autoref{fig:ctpn_splitting}). Therefore, now the box regression is only concerned with the anchor's height \(h\), since the width is fixed and the RPN only has to learn text-specific features of a reduced bounding box of size \(h \times 16\).
 
@@ -160,7 +160,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 		We observed that a large number of the generated anchors were meaningless in our context due to little variation of text height. Therefore, we changed the default set of anchors to use only 3 different heights: \(\{10, 16, 23\}\) pixels which correspond to the most common ground truth heights after resizing the image to be 600px wide. This reduced the iteration time more than three times and also resulted in faster convergence of the training.
 
-		We minimised the loss function using the Adam optimiser \citep{adam}, with an initial learning rate \(\lambda = 0.0001\). Furthermore, we used \(L_2\) regularizer with balancing weight \(\lambda_{L2} = 0.0005\).
+		We minimised the loss function using the Adam optimiser \citep{adam}, with an initial learning rate \(\lambda = 0.0001\). Furthermore, we used \(L_2\) regulariser with balancing weight \(\lambda_{L2} = 0.0005\).
 
 %========================================================================================
 
@@ -213,7 +213,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\subsection{Collage of paragraphs}
 		\subsubsection*{\ds{Collage} dataset}
 
-			For the first training session, we used images of paragraphs from the database along with their segmentations into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders to look similar to the sections of a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation.
+			For the first training session, we used images of paragraphs from the database along with their segmentation into lines as labels. To make them resemble the format of the documents, we juxtaposed two or three paragraphs picked at random from the database. These were corrected for rotation and augmented with borders to look similar to the sections of a document (\autoref{fig:collage}). We generated \(3500\) examples for training and \(500\) for validation.
 
 		%........................................................................................
 
@@ -248,7 +248,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		%........................................................................................
 		% subsubsection: general description
 
-			To address the limitations of the \ds{Collage} dataset and allow the model to learn more complex patterns, we propose to generate images which resemble more the real documents. To this end, we fill accident statement templates of 4 different styles with handritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
+			To address the limitations of the \ds{Collage} dataset and allow the model to learn more complex patterns, we propose to generate images which resemble more the real documents. To this end, we fill accident statement templates of 4 different styles with handwritten text from a database. This results in realistic looking documents while saving the high cost of manual labelling.
 
 		%........................................................................................
 
@@ -278,7 +278,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\end{minipage}
 			\\
 
-			To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 70\% filled. Note that unlike the first text source, these words come in order from the original line, splitted by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
+			To avoid placeholders filled with very short words, we add multiple words to the same placeholder until it is at least 70\% filled. Note that unlike the first text source, these words come in order from the original line, split by the above algorithm. Moreover, lines come sequentially from the same paragraph, so there is writer consistency for a good part of a template, just like in the real world.
 
 		%........................................................................................
 
@@ -294,7 +294,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\end{enumerate}
 			\end{minipage}\\
 
-			The method above works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we deskew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another text line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
+			The method above works well as long as a few assumptions hold. First, the text image has to be horizontal. In case it is not (see \autoref{fig:baseline_skewed}), we de-skew it by rotating with the average angle of Hough lines. Second, the input line has to be correctly segmented vertically. As a counter example, \autoref{fig:baseline_segmentation} shows that due to another text line present in the same image it is difficult to segment the words correctly. Fortunately, the database does not contain many examples that break these assumptions and we can reject tokens resulted from a failed segmentation based on their length.
 
 			\begin{figure}
 				\begin{subfigure}{\linewidth}
@@ -323,7 +323,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		%........................................................................................
 
 		\subsubsection*{Outcome}
-			With the above techniques we generated 1000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the perfomance on the \ds{Test} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
+			With the above techniques we generated 1000 templates for training, for a total of 50\,000 text examples; we will refer to this dataset as \ds{Template}. It became apparent that this task was appropriately more difficult than the \ds{Collage} dataset, as the validation performance was still improving after 35\,000 steps. However, due to a slow improvement rate, we stopped the training there, as we deemed the validation performance ``good enough'' for an experiment, at \(\AP \simeq 0.76\). Surprisingly though, the performance on the \ds{Test} dataset was essentially zero (\(\AP \simeq 0.007\)). A very close inspection of the generated data, in comparison to the test data, revealed a key difference between the two: the real-world documents are (almost) binarised, while the text from the RIMES database is not (\autoref{fig:template_gray_hist}). Convolutional neural networks should be robust to general appearance changes, especially when random contrast is used as a data augmentation technique. However, knowing that the first filters of CNNs correspond to edge extractors, we hypothesise that the disruption is given by the transitions from foreground (text) to background (white). In the case of RIMES, these are soft edges and only extreme contrast boosts can convert them into hard edges (\autoref{fig:template_gray_example}).
 
 			\begin{figure}
 				\begin{subfigure}{\linewidth}
@@ -380,7 +380,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 	%----------------------------------------------------------------------------------------
 	\subsection{CTPN test}
-		Having proved the feasability of general object detection architectures for our task, we started seeking further improvements by emplying the text-specialised architecture of \CTPN{}. We build upon the previous progress and train directly on the dataset with best results so far, \ds{Template_gen}. The model converged after 10\,000 steps and achieved a validation \(\AP = 0.69\). Despite giving the best results visually on \ds{Test} dataset, it appears to perform worse than the best \FRCNN{} model, with \(\AP = 0.31\).
+		Having proved the feasibility of general object detection architectures for our task, we started seeking further improvements by employing the text-specialised architecture of \CTPN{}. We build upon the previous progress and train directly on the dataset with best results so far, \ds{Template_gen}. The model converged after 10\,000 steps and achieved a validation \(\AP = 0.69\). Despite giving the best results visually on \ds{Test} dataset, it appears to perform worse than the best \FRCNN{} model, with \(\AP = 0.31\).
 
 
 %========================================================================================
@@ -389,9 +389,9 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 \section{In-depth evaluation}\label{sec:detection_results}
 	% this evaluates text detection in 2 simple numbers (P, R), in terms of pixels: http://vision.soic.indiana.edu/papers/textevaluation2000das.pdf
 
-	We have seen in the previous section that different combinations of architectures and training datasets achieve vastly different performances on real data. Moreover, as briefly discussed in \autoref{sec:detection_eval}, it is difficult to quantify them through a single number. This was also confirmed empirically when observing that intermediate models with high \(\AP\) scores gave subpar detections. Therefore, in what follows we will perform a more in-depth analysis of models' performace in the interest of finding the factors that contribute to improvement and choosing the most robust model.
+	We have seen in the previous section that different combinations of architectures and training datasets achieve vastly different performances on real data. Moreover, as briefly discussed in \autoref{sec:detection_eval}, it is difficult to quantify them through a single number. This was also confirmed empirically when observing that intermediate models with high \(\AP\) scores gave subpar detections. Therefore, in what follows we will perform a more in-depth analysis of models' performance in the interest of finding the factors that contribute to improvement and choosing the most robust model.
 
-	\Citet{objdet_performance} give an overview of different metrics that can be useful for detailed evaluation of object detection algorithms. We are interested in evaluating both the detection \emph{quantity}, as well as its \emph{quality}. However, these two measures are related, since the detection quantity depends on our quality requirements. We could overcome this tight connection by performing evaluation at a higher level thorugh a \emph{goal-directed} approach. In such a case, the text locating algorithms would be judged by the recognition rate they achieve when coupled with a text recogniser. However, this would introduce another dependency in the system and, to the best of our knowledge, no robust system exists yet for handwriting.
+	\Citet{objdet_performance} give an overview of different metrics that can be useful for detailed evaluation of object detection algorithms. We are interested in evaluating both the detection \emph{quantity}, as well as its \emph{quality}. However, these two measures are related, since the detection quantity depends on our quality requirements. We could overcome this tight connection by performing evaluation at a higher level through a \emph{goal-directed} approach. In such a case, the text locating algorithms would be judged by the recognition rate they achieve when coupled with a text recogniser. However, this would introduce another dependency in the system and, to the best of our knowledge, no robust system exists yet for handwriting.
 
 	We reiterate the main concerns for this evaluation:
 	\begin{description}
@@ -421,10 +421,10 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 			\]
 
 		%........................................................................................
-		\subsubsection*{Results intepretation}
-			As expected from the intermediate results, the model trained on the grayscale dataset \ds{Template} has the lowest recall and precision. However, for the very few boxes that it detects with high confidence (\(c \geq 0.8\)) it also gives very good overlap. This is opposite to the model trained on \ds{Collage}, which seems to have learned to detect the wrong thing, as higher confidence decreases both the recall and the precision.
+		\subsubsection*{Results interpretation}
+			As expected from the intermediate results, the model trained on the gray-scale dataset \ds{Template} has the lowest recall and precision. However, for the very few boxes that it detects with high confidence (\(c \geq 0.8\)) it also gives very good overlap. This is opposite to the model trained on \ds{Collage}, which seems to have learned to detect the wrong thing, as higher confidence decreases both the recall and the precision.
 
-			The model trained on \ds{Template_bin} gives the most intuitive results as the score threshold influences almost linearly both the recall (downwards) and the precision (upwards). Before our text generator was implemented, we believed this to be the maximum achievable with the given datasets. It was then confirmed by the result of model trained on \ds{Template_gen}, which adresses most of the previous limitations. Therefore, it has better recall at all confidence levels, and better precision in general. There seems to be a small exception for high confidence levels (\(c \geq 0.85\)), where \ds{Template_bin} appears to give tighter bounding boxes. However, this is caused by averaging over a smaller number of instances (see recall curve), which is confirmed by the de average deviation of the mean \(\iou\).
+			The model trained on \ds{Template_bin} gives the most intuitive results as the score threshold influences almost linearly both the recall (downwards) and the precision (upwards). Before our text generator was implemented, we believed this to be the maximum achievable with the given datasets. It was then confirmed by the result of model trained on \ds{Template_gen}, which addresses most of the previous limitations. Therefore, it has better recall at all confidence levels, and better precision in general. There seems to be a small exception for high confidence levels (\(c \geq 0.85\)), where \ds{Template_bin} appears to give tighter bounding boxes. However, this is caused by averaging over a smaller number of instances (see recall curve), which is confirmed by the   average deviation of the mean \(\iou\).
 
 			If we posit that the confidence score bears little importance in our context, we may approach the problem from a different angle, keeping in mind that we want the detection to be as tight as possible around the text. We rank the boxes by their overlap with the mapped ground truth
 			%\footnote{The mapping is again done greedily}
@@ -437,7 +437,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 	\subsection{Connectionist Text Proposal Network}\label{sec:ctpn_results}
 		We evaluate the results of \CTPN{} architecture using the same \ds{Test} dataset and, of course, the same metrics as for \FRCNN{}. These are displayed in \autoref{fig:ctpn_results}. The \CTPN{} model gives very high confidence (\(c \geq 0.9\)) for virtually all the outputted boxes. For this reason, the curves filtered by this score are essentially flat.
 
-		We can argue, based on the middle and bottom plots, that the model performs worse than the best \FRCNN{} model, giving slightly worse overlaps and with less recall. This contradicts a little our intuition. Visualising the results, we observed that the bounding boxes of \FRCNN{} often cut the sides of text while being a little taller, whereas the \CTPN{} makes a better vertical separation while including more white space to the left and right of text. Such differences are difficult to quantify with our chosen measures. Furthermore, we believe the lower recall of \CTPN{} is due to how we assign detections to ground truth. Namely, each predicted box is assigned \emph{uniquely} to the ground truth of highest overlap; other ground truth boxes covered by the same prediction are counted as undetected. This is unfavourable for the model, since it often merges together predictions lying on the same line (\autoref{fig:ctpn_overzealous_merge}), under the control of hyperparamter \(\tau_{gap}\).
+		We can argue, based on the middle and bottom plots, that the model performs worse than the best \FRCNN{} model, giving slightly worse overlaps and with less recall. This contradicts a little our intuition. Visualising the results, we observed that the bounding boxes of \FRCNN{} often cut the sides of text while being a little taller, whereas the \CTPN{} makes a better vertical separation while including more white space to the left and right of text. Such differences are difficult to quantify with our chosen measures. Furthermore, we believe the lower recall of \CTPN{} is due to how we assign detections to ground truth. Namely, each predicted box is assigned \emph{uniquely} to the ground truth of highest overlap; other ground truth boxes covered by the same prediction are counted as undetected. This is unfavourable for the model, since it often merges together predictions lying on the same line (\autoref{fig:ctpn_overzealous_merge}), under the control of hyperparameter \(\tau_{gap}\).
 		\vspace*{-0.25em}
 		\begin{figure}[htb]
 			\includegraphics{ctpn_overzealous}
