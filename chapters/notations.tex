@@ -1,0 +1,34 @@
+%!TEX root = ../main.tex
+\chapter*{Notations}
+\addcontentsline{toc}{chapter}{Notations}
+
+This section provides a concise reference for different notation styles and abbreviations that we use thorough this document.
+% Apart from the following mathematical notations, we also use special rules for:
+
+\begin{table}[!h]
+% \flushleft
+\begin{tabular}[t]{c l}
+	\multicolumn{2}{l}{\bf Numbers} \\\hline
+	\({0,1}\) & The set containing 0 and 1 \\
+	\(a\) & A scalar\\
+	% \(i = 1..N\) & Variable \(i\) takes values from 1 to N\\
+	\(\ve{v}\) & A vector (lowercase)\\
+	\(\ve{I}\) & A matrix (uppercase)\\
+	\(\mathcal{F}\) & A feature representation \\
+	\multicolumn{2}{l}{} \\
+	\multicolumn{2}{l}{\bf Indexing} \\\hline
+	\(\ve{v}_i\) & Element \(i\) of vector \(\ve{v}\)\\
+	\(\ve{I}_{r,c}\) & Element at \(r,c\) in matrix\\
+	\(\ve{I}_{r,:}\) & All elements in row \(r\)\\
+	\(\ve{I}_{:,c}\) & All elements in column \(c\)\\
+	\multicolumn{2}{l}{} \\
+\end{tabular}\hspace{1cm}
+\begin{tabular}[t]{c l}
+	\multicolumn{2}{l}{\bf Other} \\\hline
+	\CTPN{} & Name of an architecture\\
+	\multicolumn{2}{l}{} \\
+	\ds{Dataset} & Name of a dataset\\
+	\ds{Model}& or of a model that was \\
+	 &trained on that dataset \\
+\end{tabular}
+\end{table}

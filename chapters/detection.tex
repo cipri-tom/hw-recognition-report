@@ -264,12 +264,12 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 
 			The first one consists of images of \emph{individual} words from the RIMES database. This has the advantage of tight bounding boxes around the text, which we established as an important criterion in \autoref{sec:detection_eval}. Also, it allows us to keep the ground truth text associated with each box, which will also make them useful for the transcription step. On the other hand, this source also poses some problems. First, words are generally shorter than the placeholders, so we would need to concatenate several words to resemble the real data. Since the word order was lost when constructing the database, this has the disadvantage that lines formed in this way do not follow any sentence structure. Furthermore, words with ascenders and descenders would need to be aligned to their baseline, which is especially difficult to estimate for short words. Finally, handwriting styles from multiple authors would be combined on the same line and in the same document section.
 
-			The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines are usually longer than the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ma{I}\): % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
+			The second source of text consists of images of text lines from the same database. This addresses the problems of word concatenation, but introduces another difficulty: the lines are usually longer than the placeholders, so they need to be cut. However, thinking forward about the text transcription part, we immediately realise that in order to have reliable \((\mathtt{image}, \mathtt{label})\) pairs, we must ensure line images are split \emph{only between the words}. We use the following algorithm to detect good splitting points in image \(\ve{I}\): % https://tex.stackexchange.com/questions/172399/how-to-write-sentences-in-an-algorithm-in-latex https://tex.stackexchange.com/questions/142922/how-to-align-text-within-an-algorithm-environment
 			\noindent\begin{minipage}{\linewidth}
 			\begin{enumerate}
 				\item use the line transcription labels to find the number of words \(n\)
 				\item project the image columns horizontally, accumulating their sum into \[
-					\ve{p}_c = \sum_{r = 1..H }\ma{I}_{r,c}
+					\ve{p}_c = \sum_{r = 1..H }\ve{I}_{r,c}
 				\]
 				\item find the continuous runs of zero \(\ve{z} = \{ (i, j) \mid \ve{p}_k = 0, \forall k \in [i, j] \}\); these correspond to gaps between letters (marked in red in \autoref{fig:baseline_ok})
 				\item take \(n\) widest gaps \(\ve{z}'\) from \(\ve{z}\), where the gap width \(w := j - i\)
@@ -283,7 +283,7 @@ The challenges presented in \autoref{sec:challenges} make it clear that a classi
 		%........................................................................................
 
 		\subsubsection*{Baseline detection}
-			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple procedure to find the baseline row \(r_b\) of a text image \(\ma{I}\) of size \(H \times W\) (\autoref{fig:baseline}):
+			When humans fill a statement template, the baseline of their handwriting lies roughly on an indicated line.  We purposely set the placeholder's bottom edge on this line in the interest of aligning the text image in a similar manner. Then we use the following simple procedure to find the baseline row \(r_b\) of a text image \(\ve{I}\) of size \(H \times W\) (\autoref{fig:baseline}):
 			\noindent\begin{minipage}{\linewidth}
 			\begin{enumerate}
 				\item project the rows of the image by averaging the pixel values: \[

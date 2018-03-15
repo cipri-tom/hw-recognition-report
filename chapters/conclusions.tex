@@ -11,7 +11,8 @@ In a similar manner, \autoref{sec:transcription_results} proves that we found se
 \section{End-to-end results}
 With a candidate for each of the parts, we can now evaluate the final performance of our system, in a goal-directed fashion\footnote{The corpus type of a detection needed for the transcription module is that of the corresponding ground truth box.}. Pairing the best text transcription model, \ds{Gen_corpus_all}, with any of the detection models should objectively show which one is best, while also proving the capabilities achieved so far. Results are shown in \autoref{tab:e2e_results}. We see the \FRCNN{} model outperforms the \CTPN{} one but we have to re-state the caveat discussed in \autoref{sec:ctpn_results}: some correct \CTPN{} detections are merged into a single line thus being wrongly discarded due to low \(\iou\).
 
-\begin{table}\begin{tabular}{| l | *3{c |}}\hline
+\begin{table}[htb]
+\begin{tabular}{| l | *3{c |}}\hline
 	\bf Model     & \bf CER & \bf WER & \(\mathbf{R}_{\iou = 0.5}\)\\\hline
 	Best \FRCNN{} & 52.38   & 91.27   & 71\\
 	Best \CTPN{}  & 53.73   & 90.87   & 54\\\hline

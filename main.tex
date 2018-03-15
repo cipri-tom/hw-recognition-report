@@ -16,7 +16,7 @@
 \usepackage[nottoc]{tocbibind} % include bibliography in ToC (third-rep.cls not working)
 \usepackage{appendix} % customise the appearance of appendix via an 'appendix' environment
 
-% \usepackage{tabu}
+% \usepackage{tabularx}
 \usepackage{array}
 \usepackage{colortbl}
 \usepackage{colortbl}
@@ -207,7 +207,14 @@
 
 
 \listoffigures
+% \listoftables
+\begingroup
+\let\clearpage\relax
 \listoftables
+
+\input{chapters/notations}
+
+\endgroup
 
 \clearpage
 \pagenumbering{arabic}
