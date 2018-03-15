@@ -1,0 +1,43 @@
+%!TEX root = ../main.tex
+% make \today be Month, year
+\renewcommand{\today}{\ifcase \month \or January\or February\or March\or %
+April\or May \or June\or July\or August\or September\or October\or November\or %
+December\fi, \number \year}
+
+\makeatletter
+\begin{titlepage}
+  \begin{center}
+    \vspace*{2cm}
+
+    \rule{.9\linewidth}{.6pt}
+    {\huge \textbf{\@title}\par}
+    \rule{.9\linewidth}{.6pt}
+
+    {\large Master's project \par}
+  \end{center}
+
+  \vspace{7cm}
+  \begin{minipage}[t]{.5\textwidth}
+    \large
+    \textit{Author:}
+
+    \textbf{\@author}
+  \end{minipage}
+  \begin{minipage}[t]{.4\textwidth}
+    \large
+    \raggedleft
+    \textit{Supervisors}:
+
+    \textbf{Dr. Mathieu Salzmann}
+    \textbf{Patrick Jayet}
+  \end{minipage}
+
+  \begin{center}
+  \vspace{\fill}
+  \textit{\today}
+  \vspace{\fill}
+
+  \includegraphics[width=0.3\textwidth]{epfl_logo}
+  \end{center}
+\end{titlepage}
+\makeatother
