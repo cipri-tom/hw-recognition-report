@@ -29,7 +29,7 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 
 		\begin{figure}
-		\begin{subfigure}[c]{.48\linewidth}
+		\begin{subfigure}[b]{.48\linewidth}
 		\begin{flushleft}
 		\footnotesize
 		\begin{tabular}{|l|c|}
@@ -57,12 +57,12 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 			Conv (1) & \#maps:64, k:$3\times3$, s:1, p:1		\tabularnewline	\hline
 			Input & $W\times32$ gray-scale image 							\tabularnewline	\hline
 		\end{tabular}\par
-		\caption[\CRNN{} structure]{\todo{Note different from paper, use tabu, split conv part separately }}\label{fig:crnn_architecture}
+		\caption{The layers' structure\\\footnotesize (sligtly different from original)}\label{fig:crnn_architecture}
 		\end{flushleft}
 		\end{subfigure}
-		\begin{subfigure}[c]{.49\linewidth}
+		\begin{subfigure}[b]{.49\linewidth}
 			\includegraphics{crnn_rec_field}
-			\caption{Image encoding into sequence of features \citep[credit to][]{CRNN}}\label{fig:crnn_sequence}
+			\caption{Image encoding into sequence of features \footnotesize\citep[credit to][]{CRNN}}\label{fig:crnn_sequence}
 		\end{subfigure}
 		\caption{The \CRNN{} architecture}
 		\end{figure}
@@ -74,8 +74,8 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 		First, the input is pooled differently on the vertical dimension than on the horizontal one. For the former, 4 layers with pooling windows of height 2 are used. As a result, an input of height 32 becomes a feature map of height 2. This is further reduced this to a \(\mathit{height} = 1\) feature by the last convolutional layer, which applies \(2 \times 2\) convolution with no padding. For the horizontal direction, the nework performs pooling only twice with a window of width 2. This ensures the receptive field does not become too wide and can still distinguish very narrow characters such as \{\texttt{l,i,1}\}. The network is fully convolutional, which allows inputs of any size to be processed. However, since the columns become features of the RNN, the height should be standardised. This design is well suited for images of text which are bounded vertically, but not horizontally.
 
 		Second, the network uses batch normalisation \citep{batch_norm}, which is standard practice in recent times since it improves the performance and the stability of the network. This works by replacing the activations \(\ve{H}\) of a layer with their normalised counterparts \(\ve{H}'\), which become the new inputs for the next layer: \[
-			\ve{H}' = \gamma \frac{\ve{H} - \ve{\mu}}{\ve{\sigma}} + \beta,
-		\]\footnote{\todo{make miu and sigma vectors}} where \(\mu\) is a vector of means of all neurons and \(\sigma\) a vector of their standard deviations. The learnable parameters \(\gamma\) and \(\beta\) ensure the network does not lose expressive power by allowing convergence towards any mean and standard deviation. Overall, using this technique means that the composition of the batches is important, as we will see shortly.
+			\ve{H}' = \gamma \frac{\ve{H} - \bm{\mu}}{\bm{\sigma}} + \beta,
+		\] where \(\bm \mu\) is a vector of means of all neurons and \(\bm \sigma\) a vector of their standard deviations. The learnable parameters \(\gamma\) and \(\beta\) ensure the network does not lose expressive power by allowing convergence towards any mean and standard deviation. Overall, using this technique means that the composition of the batches is important, as we will see shortly.
 
 		Finally, we use ReLU activations at each layer and bias terms for the convolution.
 
@@ -306,8 +306,8 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 		%........................................................................................
 		\subsubsection*{Strategy 2: add extra features}
-			To overcome the problem of a very long sequence, we add the corpus information as extra features to the LSTM input, at all time steps. This is encoded as before, in an indicator vector \(\mathbbm{1}(c = 1) \in \{0,1\}^7\) (now only of necessary width), and is concatenated to the image features \(\mathcal{F}_t\) of each time step in the sequence\footnote{\todo{Use concatenation operator}}:\[
-				\mathcal{F}'_t = \mathcal{F}_t \circ \mathbbm{1}(c = 1).
+			To overcome the problem of a very long sequence, we add the corpus information as extra features to the LSTM input, at all time steps. This is encoded as before, in an indicator vector \(\mathbbm{1}(c = 1) \in \{0,1\}^7\) (now only of necessary width), and is concatenated to the image features \(\mathcal{F}_t\) of each time step in the sequence:\[
+				\mathcal{F}'_t = \mathcal{F}_t \oplus \mathbbm{1}(c = 1).
 			\]
 
 			Since the previous dataset already contains corpus information, we reuse it for training a new model with this configuration, \ds{Gen_corpus_all}. It achieves a new best, at \CER{41.76}. We observe it correctly learns formats of corpora, such as always predicting long numbers in groups of two digits, despite the ground truth being without white space.

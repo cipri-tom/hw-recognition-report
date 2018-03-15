@@ -3,7 +3,7 @@
 
 This report supports the associated master project for handwriting recognition in difficult business documents. It presents a detailed view of our research and describes the steps we took to implement a working system. In addition, it grounds the problem in the existing body of work and motivates our choices with respect to various obstacles.
 
-The rest of the chapter presents the context of the task, including motivation, challenges, related work and the goals we have set. \Autoref{ch:detection} is dedicated to the text detection part, presenting two different architectures and several experiments. Then, \autoref{ch:transcription} presents the second, and more difficult problem of text transcription from the images. We give a detailed analysis of important factors, which is supported by another large series of investigations. Each of the two parts also has a section dedicated to evaluation of the approach. Finally, we conclude with \autoref{ch:conclusions} by listing our achievements and future work.
+The rest of the chapter presents the context of the task, including motivation, challenges, related work and the goals we have set. \Autoref{ch:detection} is dedicated to the text detection part, presenting two different architectures and several experiments. Then, \autoref{ch:transcription} presents the second, and more difficult problem of text transcription from the images. We give a detailed analysis of important factors, which is supported by another large series of investigations. Each of the two parts also has a section dedicated to evaluation of the results. Finally, we conclude with \autoref{ch:conclusions} by listing our achievements and future work.
 
 
 \section{Motivation}
@@ -18,13 +18,8 @@ Given the loose requirements above, the scope of the project was set to be an ex
 
 During phase zero of the project, we carried out extensive data screening in order to understand the format of the accident statements and the challenges it poses. In this section we expose the main take-aways of this process, along with the identified constraints and how they dictate the path we need to follow.
 
-% \todo{
-% % http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf
-% This has some examples of `exceptional' images for OCR systems. These kind of difficulties are the normal images for us (show examples)
-% }
 %----------------------------------------------------------------------------------------
 
-% ToDo: why footnote with ``a'' ?
 \subsection{Format}
 	\urldef{\transkribus}\url{https://transkribus.eu/Transkribus/}
 	\begin{figure}
@@ -51,16 +46,15 @@ During phase zero of the project, we carried out extensive data screening in ord
 
 \subsection{Quality}
 
-	During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a "$n$-th" copy of the original, each stage degrading the signal and introducing noise. In some cases, even the "original" is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan. Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
+	During the acquisition and digitisation process many factors contribute to the final quality of the scan. First, we may get a ``$n$-th'' copy of the original, each stage degrading the signal and introducing noise. In some cases, even the ``original'' is, in fact, a carbon paper copy. In some other cases, the support paper is thin enough that data from the verso is visible on the scan. Also, probably for legacy reasons of disk space efficiency, most of the image information is discarded and only a 1-bit depth version is kept (binary image). This prevents colour-based segmentation of the image.
 
 	However, the biggest source of innacuracies and inconsistencies is the relatively unconstrained format of the statements. The persons completing such an accident statement are free to:
 	\begin{description}
 		\item[choose the format of the input data] For example \texttt{27 Apr 94} and \texttt{04/22/1994} are both valid entries for a date. This lack of rigor is especially problematic for addresses.
 
-		% TODO: show pictures
-		\item[use the available space to their pleasing] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, people ignore labels and literally overwrite them.
+		\item[use the available space to their pleasing] In many cases, the given bounds are not respected and resulting text exceeds them horizontally or vertically. Often enough, people also ignore the labels and write in non-standard places.
 
-		\item[use their natural handwriting] \label{itm:natural_handwriting} This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:context}, one person's \texttt{1} looks exactly the same as another person's \texttt{A}, and only the context helps us infer the word.
+		\item[use their natural handwriting] \label{itm:natural_handwriting} This introduces a great degree of variability for text entries, as well as ambiguity. As seen in \autoref{fig:context}, one person's \texttt{1} can resemble another person's \texttt{A}, and only the context helps us infer the word.
 
 		\item[use any vocabulary they consider suitable] This often results in non-standard abbreviations or partial words (\autoref{fig:abbrev}).
 	\end{description}
@@ -76,7 +70,7 @@ During phase zero of the project, we carried out extensive data screening in ord
 			\includegraphics{abbrev}
 			\caption{}\label{fig:abbrev}
 		\end{subfigure}
-		\caption[Ambiguity in handwriting]{In \subref{fig:context}, the highlighted glyphs are highly ambigous either because they look like something else (top image: \(\mathtt{1} \rightarrow \mathtt{A}, \mathtt{13} \rightarrow \mathtt{B} \)) or because they look like no discernible character on their own (bottom).\\
+		\caption[Ambiguity in handwriting]{In \subref{fig:context}, the highlighted glyphs are highly ambigous either because they look like something else (top image: \(\mathtt{1} \rightarrow \mathtt{A}, \mathtt{13} \rightarrow \mathtt{B} \)) or because they look like no discernible character on their own (bottom image).\\
 		In \subref{fig:abbrev}, we see people use custom abbreviations (``AB'') and write beyond the indicated box}
 	\end{figure}
 
@@ -134,7 +128,7 @@ During phase zero of the project, we carried out extensive data screening in ord
 	\end{enumerate}
 	We realise, however, that this may be an over optimistic goal, especially that we have no labelled data.
 
-	It is important to note that matching text to its label in order to give structured information is beyond the scope of the current work, partly because we view it as a less challenging task and partly because it is of no use without having the above system first.
+	It is important to note that matching text to its label in order to give \emph{structured} information is beyond the scope of the current work, partly because we view it as a less challenging task and partly because it is of no use without having the above system first.
 
 
 
