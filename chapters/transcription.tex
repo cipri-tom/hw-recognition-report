@@ -171,17 +171,6 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 
 			In general, we validated through many small experiments that it is possible to learn to transcribe handwriting from our corpus by training on a different one. While the results so far are cannot be used in practice, the performance improvements demonstrate that transfer learning is a valid strategy, so we continue to explore it. In addition, we validate the results of \citet{MDLSTM_dropout}, showing that dropout consistently improves the performance. Therefore, all further models will use it, with \(p_\mathit{drop} = 0.2\).
 
-			\begin{figure}
-				\includegraphics[width=.32\linewidth]{crnn/short_ok_1}
-				\includegraphics[width=.32\linewidth]{crnn/short_ok_2}
-				\includegraphics[width=.32\linewidth]{crnn/short_ok_3}
-				\includegraphics[width=.32\linewidth]{crnn/short_dash_1}
-				\includegraphics[width=.32\linewidth]{crnn/short_dash_2}
-				\includegraphics[width=.32\linewidth]{crnn/short_dash_3}
-				\caption[Influence of backgrond elements]{The same model \ds{Word_bin_drop} was evaluated on clean images from RIMES (top) and their variants with added indicator line (bottom). This simple perturbation increases the error rate by \(20\%\). }
-				\label{fig:crnn_dashes}
-			\end{figure}
-
 			\begin{table}
 				\centering
 				\begin{tabular}{| l | *{4}{c |}}\hline
@@ -195,6 +184,17 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 				\end{tabular}
 				\caption[Academic datasets results]{Results of the \CRNN{} model trained on different datasets from the academic databases RIMES and IAM. Largely impractical, but useful to confirm the influence of various factors.}\label{tab:transcription_academic}
 			\end{table}
+
+			\begin{figure}
+				\includegraphics[width=.32\linewidth]{crnn/short_ok_1}
+				\includegraphics[width=.32\linewidth]{crnn/short_ok_2}
+				\includegraphics[width=.32\linewidth]{crnn/short_ok_3}
+				\includegraphics[width=.32\linewidth]{crnn/short_dash_1}
+				\includegraphics[width=.32\linewidth]{crnn/short_dash_2}
+				\includegraphics[width=.32\linewidth]{crnn/short_dash_3}
+				\caption[Influence of backgrond elements]{The same model \ds{Word_bin_drop} was evaluated on clean images from RIMES (top) and their variants with added indicator line (bottom). This simple perturbation increases the error rate by \(20\%\). }
+				\label{fig:crnn_dashes}
+			\end{figure}
 
 	%----------------------------------------------------------------------------------------
 
@@ -367,7 +367,8 @@ The chapter first introduces the \CRNN{} architecture \citep{CRNN}, which has be
 			\end{figure}
 
 		%........................................................................................
-		\subsubsection*{Datasets and outcome}
+		\vspace*{-.5em}
+		\subsubsection*{Datasets and outcome}\vspace*{-.8em}
 			We enhanced the generator from \autoref{sec:generator} to include this type of deformations as well, and, as before, we produced a dataset of 1 million examples, with corpus information included, \ds{Gen_elastic}. We observed from the start a much better performance on the validation dataset, compared to the previous best model, \ds{Gen_corpus_all} (\autoref{fig:elastic_cer_drop}). However, this does not readily transfer to the \ds{Test} dataset, as it attains a \mbox{\CER{42.2}} that is close to the one before. Moreover, we let this model train for much longer than any previous ones and observe that although its \emph{validation} performance remains stable, at a given point it starts to perform worse on \ds{Test}(\autoref{tab:elastic_corpus}). It is important to note that this type of overfit cannot be detected during training since we do not validate on \ds{Test}. Therefore, the model is picking up very subtle features which differentiate generated data from real one, although for us both look the same.
 
 			\begin{figure}
